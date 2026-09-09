@@ -14,6 +14,7 @@
 <link rel="apple-touch-icon" href="./icons/icon-192.png">
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/dexie@3.2.4/dist/dexie.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
 body{font-family:Arial;margin:0;background:#f4f7fb;color:#172033}
 header{background:#305496;color:#fff;padding:4px 14px}
@@ -932,6 +933,100 @@ body.dark .theme-btn:hover{background:rgba(255,255,255,.28)}
   let gudangData = null;               // {products:[{name,col}], saldoAwal:{name:stok}, rows:[{ts,tanggal,values:{name:{masuk,keluar,stok}}}]}
   let editHargaBeliMode = false;
 
+  /* ------------- Cloud Sync (Supabase) ------------- */
+  const SUPABASE_URL = 'https://twrfpovxjuubisskljjv.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_AeR-sG7aYIFrP5nIsloGfw_uJVYO3GN';
+  const SYNC_ROW_ID  = 'main'; // 1 baris = 1 "database" bersama untuk semua device
+  let sbClient = null, isSyncingFromCloud = false, pushTimer = null, realtimeReady = false;
+
+  function initSupabase(){
+    try {
+      if (typeof supabase === 'undefined') return null;
+      sbClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { realtime: { params: { eventsPerSecond: 2 } } });
+    } catch(e){ console.warn('Supabase init gagal', e); sbClient = null; }
+    return sbClient;
+  }
+
+  async function gatherLocalSnapshot(){
+    if (!useIDB) return null;
+    const tx   = await db.tx.toArray();
+    const meta = await db.meta.toArray();
+    return { tx, meta };
+  }
+
+  // Kirim seluruh data lokal ke cloud (dipanggil setelah setiap perubahan data).
+  async function pushToCloud(){
+    if (!sbClient || !useIDB || isSyncingFromCloud) return;
+    try {
+      const snapshot = await gatherLocalSnapshot();
+      if (!snapshot) return;
+      const { error } = await sbClient.from('app_sync').upsert({
+        id: SYNC_ROW_ID, data: snapshot, updated_at: new Date().toISOString()
+      });
+      if (error) console.warn('pushToCloud gagal', error);
+      else setCloudStatus('Tersinkron ke cloud • ' + new Date().toLocaleTimeString('id-ID'));
+    } catch(e){ console.warn('pushToCloud gagal', e); }
+  }
+  // Debounce agar tidak spam network saat banyak perubahan beruntun.
+  function schedulePush(){
+    clearTimeout(pushTimer);
+    setCloudStatus('Menyinkronkan…');
+    pushTimer = setTimeout(pushToCloud, 1200);
+  }
+
+  // Ambil data terbaru dari cloud dan timpa data lokal (dipanggil saat pertama buka & saat ada update dari device lain).
+  async function pullFromCloud(opts){
+    opts = opts || {};
+    if (!sbClient || !useIDB) { await restoreFromDB(); await loadGudangFromDB(); return; }
+    try {
+      const { data, error } = await sbClient.from('app_sync').select('data,updated_at').eq('id', SYNC_ROW_ID).maybeSingle();
+      if (error) throw error;
+      if (data && data.data){
+        isSyncingFromCloud = true;
+        const snap = data.data;
+        await db.tx.clear();
+        if (snap.tx && snap.tx.length) await db.tx.bulkPut(snap.tx);
+        await db.meta.clear();
+        if (snap.meta && snap.meta.length) await db.meta.bulkPut(snap.meta);
+        isSyncingFromCloud = false;
+        setCloudStatus('Sinkron dari cloud • ' + new Date().toLocaleTimeString('id-ID'));
+      } else {
+        // Belum ada data di cloud: kalau device ini punya data lokal, unggah dulu sebagai data awal.
+        const localCount = await db.tx.count();
+        if (localCount) await pushToCloud();
+      }
+    } catch(e){
+      console.warn('pullFromCloud gagal', e);
+      setCloudStatus('Gagal terhubung ke cloud (mode lokal)');
+    } finally {
+      await restoreFromDB();
+      await loadGudangFromDB();
+      if (!opts.silent) setStatus('Data tersinkron dari cloud.');
+    }
+  }
+
+  // Dengarkan perubahan real-time dari device lain yang memakai link yang sama.
+  function subscribeRealtime(){
+    if (!sbClient || realtimeReady) return;
+    realtimeReady = true;
+    sbClient.channel('app_sync_live')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'app_sync', filter: 'id=eq.' + SYNC_ROW_ID }, () => {
+        if (!isSyncingFromCloud) pullFromCloud({ silent: true });
+      })
+      .subscribe();
+  }
+
+  function setCloudStatus(msg){
+    let el = document.getElementById('cloudSyncStatus');
+    if (!el){
+      el = document.createElement('div');
+      el.id = 'cloudSyncStatus';
+      el.style.cssText = 'position:fixed;right:8px;bottom:8px;font-size:11px;color:#fff;background:#1f4e78cc;padding:4px 9px;border-radius:6px;z-index:9999;pointer-events:none;';
+      document.body.appendChild(el);
+    }
+    el.textContent = msg;
+  }
+
   /* ------------- IndexedDB (Dexie) ------------- */
   const IDB_SUPPORTED = (() => {
     try { return typeof indexedDB !== 'undefined' && typeof Dexie !== 'undefined'; } catch(e){ return false; }
@@ -1257,6 +1352,7 @@ self.onmessage = function(e){
     setStatus('Berhasil diproses: ' + _parseFileName + ' (total tersimpan ' + totalRows.toLocaleString('id-ID') + ' baris)' + extra + (useIDB ? ' — IndexedDB' : ' — in-memori'));
     closeDd();
     hideBusy();
+    schedulePush();
   }
 
   /* ------------- materialise internal-camel rows to UI form ------------- */
@@ -1690,6 +1786,7 @@ self.onmessage = function(e){
     show(tabId, active);
     const total = useIDB ? await db.tx.count() : rows.length;
     document.getElementById('save').disabled = total === 0;
+    schedulePush();
   }
 
   async function deleteMonthData(){
@@ -3558,10 +3655,12 @@ self.onmessage = function(e){
     renderCekFitri();
     setGudangStatus('Data gudang sudah dihapus.');
     closeGudangDd();
+    schedulePush();
   }
 
   async function saveGudangToDB(data){
     if (useIDB){ try{ await db.meta.put({key:'gudangData', value:data}); } catch(e){ console.warn('save gudang', e); } }
+    schedulePush();
   }
 
   async function loadGudangFromDB(){
@@ -3849,8 +3948,14 @@ self.onmessage = function(e){
     initTheme();
     initMainTabs();
     await initDB();
-    await restoreFromDB();
-    await loadGudangFromDB();
+    initSupabase();
+    if (sbClient){
+      await pullFromCloud({ silent: true });
+      subscribeRealtime();
+    } else {
+      await restoreFromDB();
+      await loadGudangFromDB();
+    }
   })();
 
   /* ------------- PWA: service worker + tombol instal ------------- */
