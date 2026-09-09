@@ -1,0 +1,16 @@
+{
+  "name": "Rekap Penjualan & Data Stok",
+  "short_name": "Rekap Penjualan",
+  "description": "Rekap penjualan, profit, dan data stok/gudang — berjalan offline dengan penyimpanan lokal (IndexedDB).",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#f4f6f9",
+  "theme_color": "#1f4e78",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
