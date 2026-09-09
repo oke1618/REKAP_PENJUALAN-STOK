@@ -1030,16 +1030,23 @@ body.dark .backup-action.warn{background:#422006;color:#fdba74;border-color:#924
 
   // Kirim seluruh data lokal ke cloud (dipanggil setelah setiap perubahan data).
   async function pushToCloud(){
-    if (!sbClient || !useIDB || isSyncingFromCloud) return;
-    try {
-      const snapshot = await gatherLocalSnapshot();
-      if (!snapshot) return;
-      const { error } = await sbClient.from('app_sync').upsert({
-        id: SYNC_ROW_ID, data: snapshot, updated_at: new Date().toISOString()
-      });
-      if (error) console.warn('pushToCloud gagal', error);
-      else setCloudStatus('Tersinkron ke cloud • ' + new Date().toLocaleTimeString('id-ID'));
-    } catch(e){ console.warn('pushToCloud gagal', e); }
+    if (!sbClient) throw new Error('Cloud belum terhubung.');
+    if (!useIDB || !db) throw new Error('Penyimpanan lokal belum siap.');
+    if (isSyncingFromCloud) return {skipped:true};
+    const snapshot = await gatherLocalSnapshot();
+    if (!snapshot) throw new Error('Data lokal tidak dapat dibaca.');
+    const payload = {
+      id: SYNC_ROW_ID,
+      data: snapshot,
+      updated_at: new Date().toISOString()
+    };
+    const result = await sbClient.from('app_sync').upsert(payload, { onConflict: 'id' });
+    if (result.error) {
+      console.error('pushToCloud gagal:', result.error);
+      throw new Error(result.error.message || 'Cloud menolak data.');
+    }
+    setCloudStatus('Upload berhasil ke cloud • ' + new Date().toLocaleTimeString('id-ID'));
+    return result.data;
   }
   // Debounce agar tidak spam network saat banyak perubahan beruntun.
   function schedulePush(){
@@ -3027,12 +3034,20 @@ self.onmessage = function(e){
 
   async function backupUploadCloud(){
     try{
-      if(!sbClient){alert('Cloud belum terhubung.');return;}
+      if(!sbClient){alert('Cloud belum terhubung. Coba refresh halaman.');return;}
+      if(!useIDB || !db){alert('Penyimpanan lokal belum siap. Coba refresh halaman.');return;}
       setCloudStatus('Mengunggah data device ini…');
-      await pushToCloud();
+      const result = await pushToCloud();
+      if(result && result.skipped) return;
       await updateBackupPanelStatus();
       setStatus('Data device ini berhasil di-upload ke cloud.');
-    }catch(e){alert('Upload cloud gagal: '+(e.message||e));}
+      alert('Upload berhasil. Data device ini sudah tersimpan di cloud.');
+    }catch(e){
+      console.error('Upload cloud gagal:',e);
+      setCloudStatus('Upload gagal');
+      await updateBackupPanelStatus();
+      alert('Upload cloud gagal.\n\n'+(e.message||e)+'\n\nJika pesan menyebut tabel app_sync, RLS, atau permission, berarti pengaturan database Supabase perlu diperbaiki.');
+    }
   }
 
   async function backupPullCloud(){
