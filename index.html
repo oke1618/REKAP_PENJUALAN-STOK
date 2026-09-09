@@ -526,15 +526,56 @@ body.dark #table button[style*="background: #fff"]{
 body.dark .busy{background:rgba(15,23,42,.7);color:#93c5fd}
 body.dark .empty{color:#94a3b8}
 body.dark .theme-btn{
-  background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.35);
-  color:#fff;font-size:12px;padding:4px 10px;border-radius:6px;cursor:pointer;font-weight:700
+  background:#fff;border:1px solid rgba(255,255,255,.75);
+  color:#24518e;font-size:12px;padding:5px 10px;border-radius:6px;cursor:pointer;font-weight:700
 }
 body.dark .theme-btn:hover{background:rgba(255,255,255,.28)}
 .theme-btn{
-  background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.35);
-  color:#fff;font-size:12px;padding:4px 10px;border-radius:6px;cursor:pointer;font-weight:700
+  background:#fff;border:1px solid rgba(255,255,255,.75);
+  color:#24518e;font-size:12px;padding:5px 10px;border-radius:6px;cursor:pointer;font-weight:700
 }
 .theme-btn:hover{background:rgba(255,255,255,.28)}
+
+/* ===== BACKUP DATA - POJOK KANAN ATAS ===== */
+.backup-wrap{position:relative}
+.backup-btn{
+  display:inline-flex;align-items:center;gap:5px;
+  background:#fff;border:1px solid rgba(255,255,255,.75);
+  color:#24518e;font-size:12px;padding:5px 10px;border-radius:6px;
+  cursor:pointer;font-weight:700;white-space:nowrap;
+}
+.backup-btn:hover{background:#f3f7fc}
+.backup-btn:active{transform:translateY(1px)}
+.backup-menu{
+  display:none;position:absolute;right:0;top:calc(100% + 8px);
+  width:min(300px,calc(100vw - 16px));background:#fff;color:#172033;
+  border-radius:10px;box-shadow:0 8px 28px #0003;padding:10px;z-index:700;
+  max-height:calc(100vh - 70px);overflow:auto;
+}
+.backup-wrap.open .backup-menu{display:block}
+.backup-title{font-size:13px;font-weight:800;color:#1f4e78;padding:4px 2px 8px;border-bottom:1px solid #e2e8f0}
+.backup-last{font-size:11px;color:#64748b;margin:7px 2px 9px;line-height:1.35}
+.backup-section{padding:9px 0;border-bottom:1px solid #e8edf4}
+.backup-section:last-child{border-bottom:0;padding-bottom:3px}
+.backup-btn-row{display:flex;flex-direction:column;gap:7px}
+.backup-action{width:100%;box-sizing:border-box;text-align:left;padding:8px 10px;border:1px solid #d7e0eb;border-radius:7px;background:#fff;color:#24364b;font-size:12px;font-weight:700;cursor:pointer}
+.backup-action:hover{background:#f3f7fc;border-color:#b9cbe0}
+.backup-action.primary{background:#285894;color:#fff;border-color:#285894;text-align:center}
+.backup-action.primary:hover{background:#1f4e78}
+.backup-action.green{background:#eaf7ef;color:#1e7a3c;border-color:#cfe8d8}
+.backup-action.warn{background:#fff8e8;color:#8a5a00;border-color:#f1dfb2}
+.backup-small{font-size:10.5px;color:#7a8b9e;line-height:1.4;margin-top:6px}
+.backup-cloud-title{font-size:12px;font-weight:800;color:#24518e;margin-bottom:6px}
+.backup-cloud-status{font-size:10.5px;color:#64748b;line-height:1.4;margin:5px 0 7px}
+body.dark .backup-menu{background:#1e293b;color:#e2e8f0;box-shadow:0 8px 28px #0008}
+body.dark .backup-title{color:#93c5fd;border-color:#334155}
+body.dark .backup-last,body.dark .backup-small,body.dark .backup-cloud-status{color:#94a3b8}
+body.dark .backup-section{border-color:#334155}
+body.dark .backup-action{background:#0f172a;color:#e2e8f0;border-color:#475569}
+body.dark .backup-action:hover{background:#1e3a5f}
+body.dark .backup-action.primary{background:#3b82f6;color:#fff;border-color:#3b82f6}
+body.dark .backup-action.green{background:#14532d;color:#86efac;border-color:#166534}
+body.dark .backup-action.warn{background:#422006;color:#fdba74;border-color:#92400e}
 
 </style>
 </head>
@@ -588,6 +629,39 @@ body.dark .theme-btn:hover{background:rgba(255,255,255,.28)}
         </div>
         <div class="hint">Format sumber mengikuti Excel terbaru: <b>Harga Beli</b> dan <b>Kd Customer</b> ikut dibaca.</div>
         <div id="status" class="status">Belum ada data.</div>
+      </div>
+    </div>
+    <div class="backup-wrap" id="backupWrap">
+      <button type="button" class="backup-btn" id="backupBtn" onclick="toggleBackupMenu()" title="Backup & Restore semua data">🟢 💾 Backup</button>
+      <div class="backup-menu" id="backupMenu" onclick="event.stopPropagation()">
+        <div class="backup-title">💾 Backup &amp; Restore Semua Data</div>
+        <div class="backup-last" id="backupLastStatus">Backup terakhir: belum ada • Folder Google Drive belum dipilih.</div>
+
+        <div class="backup-section">
+          <div class="backup-btn-row">
+            <button type="button" class="backup-action" onclick="chooseBackupFolder()">🔗 Pilih Folder Google Drive (sekali saja)</button>
+            <button type="button" class="backup-action primary" onclick="backupNowToDrive()">💾 Backup Sekarang ke Google Drive</button>
+            <button type="button" class="backup-action" onclick="downloadBackupFile()">⬇️ Unduh File Backup (manual)</button>
+          </div>
+        </div>
+
+        <div class="backup-section">
+          <div class="backup-btn-row">
+            <button type="button" class="backup-action green" onclick="restoreFromDriveFolder()">♻️ Restore dari Folder Google Drive</button>
+            <button type="button" class="backup-action warn" onclick="restoreFromBackupFile()">📁 Restore dari File Backup...</button>
+          </div>
+          <div class="backup-small">Backup mencakup: Rekap Penjualan, Rekap Uang Masuk, dan data Bukti/Titip/Lunas. Gunakan “Restore” jika terjadi error atau data hilang.</div>
+        </div>
+
+        <div class="backup-section">
+          <div class="backup-cloud-title">☁️ Sync Antar-Device (Cloud)</div>
+          <div class="backup-cloud-status" id="backupCloudStatus">Status cloud mengikuti sinkronisasi aplikasi.</div>
+          <div class="backup-btn-row">
+            <button type="button" class="backup-action primary" onclick="backupUploadCloud()">⬆️ Upload Data Device Ini ke Cloud</button>
+            <button type="button" class="backup-action" onclick="backupPullCloud()">⬇️ Ambil Data Terbaru dari Cloud</button>
+          </div>
+          <div class="backup-small">Gunakan “Upload” setelah selesai kerja di device ini, dan “Ambil” sebelum mulai kerja di device lain, supaya data selalu sinkron. Data terbaru akan menimpa data di device tujuan.</div>
+        </div>
       </div>
     </div>
     </div>
@@ -2774,6 +2848,204 @@ self.onmessage = function(e){
     }
     XLSX.writeFile(w, 'Rekap_Penjualan_Hasil.xlsx');
   }
+
+  /* ------------- Backup & Restore seluruh data aplikasi ------------- */
+  let backupDirHandle = null;
+  let backupFileInput = null;
+
+  function toggleBackupMenu(){
+    const w=document.getElementById('backupWrap');
+    if(!w) return;
+    w.classList.toggle('open');
+    if(w.classList.contains('open')) updateBackupPanelStatus();
+  }
+  function closeBackupMenu(){
+    const w=document.getElementById('backupWrap');
+    if(w) w.classList.remove('open');
+  }
+
+  document.addEventListener('click', (e)=>{
+    const w=document.getElementById('backupWrap');
+    if(w && !w.contains(e.target)) w.classList.remove('open');
+  });
+
+  async function getBackupSnapshot(){
+    if(useIDB && db){
+      const snap=await gatherLocalSnapshot();
+      if(snap) return snap;
+    }
+    return {tx:Array.isArray(rows)?rows.slice():[],meta:gudangData?[{key:'gudangData',value:gudangData}]:[]};
+  }
+
+  async function buildBackupObject(){
+    const snapshot=await getBackupSnapshot();
+    return {
+      app:'Rekap Penjualan & Data Stok',
+      backupVersion:2,
+      createdAt:new Date().toISOString(),
+      database:'rekapPenjualan_v1',
+      tx:snapshot.tx||[],
+      meta:snapshot.meta||[],
+      theme:(()=>{try{return localStorage.getItem('rekap-theme')||'light'}catch(e){return 'light'}})()
+    };
+  }
+
+  function backupFileName(){
+    const d=new Date(),pad=n=>String(n).padStart(2,'0');
+    return 'Backup_Rekap_'+d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate())+'_'+pad(d.getHours())+pad(d.getMinutes())+pad(d.getSeconds())+'.json';
+  }
+
+  function saveBackupLast(name){
+    try{localStorage.setItem('rekap-last-backup',new Date().toISOString());localStorage.setItem('rekap-last-backup-name',name||'')}catch(e){}
+    updateBackupPanelStatus();
+  }
+
+  async function updateBackupPanelStatus(){
+    const el=document.getElementById('backupLastStatus');
+    if(!el) return;
+    let last='belum ada',name='';
+    try{last=localStorage.getItem('rekap-last-backup')||'belum ada';name=localStorage.getItem('rekap-last-backup-name')||''}catch(e){}
+    let folder='belum dipilih';
+    if(backupDirHandle && backupDirHandle.name) folder=backupDirHandle.name;
+    el.textContent='Backup terakhir: '+(last==='belum ada'?'belum ada':new Date(last).toLocaleString('id-ID'))+(name?' • '+name:'')+' • Folder Google Drive '+folder+'.';
+    const cs=document.getElementById('backupCloudStatus');
+    if(cs) cs.textContent=(document.getElementById('cloudSyncStatus')?.textContent)||'Status cloud mengikuti sinkronisasi aplikasi.';
+  }
+
+  async function chooseBackupFolder(){
+    if(!window.showDirectoryPicker){
+      alert('Browser ini belum mendukung pemilihan folder langsung. Gunakan “Unduh File Backup (manual)” atau Chrome/Edge versi terbaru.');
+      return;
+    }
+    try{
+      const h=await window.showDirectoryPicker({mode:'readwrite'});
+      backupDirHandle=h;
+      try{localStorage.setItem('rekap-backup-folder-name',h.name||'')}catch(e){}
+      await updateBackupPanelStatus();
+      setStatus('Folder backup dipilih: '+(h.name||'Google Drive'));
+    }catch(e){
+      if(e && e.name!=='AbortError') alert('Pemilihan folder dibatalkan/gagal: '+(e.message||e));
+    }
+  }
+
+  async function ensureBackupFolder(){
+    if(backupDirHandle) {
+      try{
+        const perm=await backupDirHandle.queryPermission({mode:'readwrite'});
+        if(perm==='granted') return true;
+        const req=await backupDirHandle.requestPermission({mode:'readwrite'});
+        return req==='granted';
+      }catch(e){ return false; }
+    }
+    await chooseBackupFolder();
+    return !!backupDirHandle;
+  }
+
+  async function backupNowToDrive(){
+    try{
+      const ok=await ensureBackupFolder();
+      if(!ok){ alert('Pilih Folder Google Drive terlebih dahulu.'); return; }
+      const backup=await buildBackupObject();
+      const name=backupFileName();
+      const fh=await backupDirHandle.getFileHandle(name,{create:true});
+      const writable=await fh.createWritable();
+      await writable.write(JSON.stringify(backup,null,2));
+      await writable.close();
+      saveBackupLast(name);
+      setStatus('Backup berhasil disimpan ke folder: '+backupDirHandle.name+' ('+(backup.tx.length||0).toLocaleString('id-ID')+' transaksi).');
+      alert('Backup berhasil disimpan ke Google Drive.\n\nFile: '+name);
+    }catch(e){
+      console.error('Backup ke Drive gagal',e);
+      alert('Backup ke Google Drive gagal: '+(e.message||e));
+    }
+  }
+
+  async function downloadBackupFile(){
+    try{
+      const backup=await buildBackupObject(),name=backupFileName();
+      const blob=new Blob([JSON.stringify(backup,null,2)],{type:'application/json;charset=utf-8'});
+      const url=URL.createObjectURL(blob),a=document.createElement('a');
+      a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();
+      setTimeout(()=>URL.revokeObjectURL(url),1000);
+      saveBackupLast(name);
+      setStatus('File backup manual berhasil dibuat: '+name);
+    }catch(e){alert('Backup gagal: '+(e.message||e));}
+  }
+
+  async function restoreBackupObject(backup){
+    if(!backup || !Array.isArray(backup.tx)) throw new Error('Format file backup tidak dikenali.');
+    if(!confirm('Restore akan mengganti data lokal aplikasi dengan isi backup ini. Lanjutkan?')) return false;
+    if(!useIDB || !db) throw new Error('Penyimpanan lokal belum siap.');
+    isSyncingFromCloud=true;
+    try{
+      await db.tx.clear();
+      if(backup.tx.length) await db.tx.bulkPut(backup.tx);
+      await db.meta.clear();
+      if(Array.isArray(backup.meta) && backup.meta.length) await db.meta.bulkPut(backup.meta);
+    }finally{isSyncingFromCloud=false;}
+    await restoreFromDB();
+    await loadGudangFromDB();
+    await refreshAfterDataChange();
+    if(sbClient) schedulePush();
+    setStatus('Restore berhasil: '+backup.tx.length.toLocaleString('id-ID')+' transaksi.');
+    return true;
+  }
+
+  async function restoreFromDriveFolder(){
+    try{
+      const ok=await ensureBackupFolder();
+      if(!ok){alert('Pilih Folder Google Drive terlebih dahulu.');return;}
+      const files=[];
+      for await(const [name,handle] of backupDirHandle.entries()){
+        if(handle.kind==='file' && /^Backup_Rekap_.*\.json$/i.test(name)) files.push({name,handle});
+      }
+      if(!files.length){alert('Tidak ditemukan file Backup_Rekap_*.json di folder tersebut.');return;}
+      files.sort((a,b)=>b.name.localeCompare(a.name));
+      const chosen=files[0];
+      const f=await chosen.handle.getFile();
+      const backup=JSON.parse(await f.text());
+      if(confirm('File backup terbaru yang ditemukan:\n\n'+chosen.name+'\n\nRestore file ini?')) await restoreBackupObject(backup);
+    }catch(e){
+      console.error('Restore folder gagal',e);
+      alert('Restore dari folder gagal: '+(e.message||e));
+    }
+  }
+
+  function restoreFromBackupFile(){
+    if(backupFileInput) backupFileInput.remove();
+    const input=document.createElement('input');
+    backupFileInput=input;input.type='file';input.accept='.json,application/json';input.style.display='none';
+    input.onchange=async()=>{
+      const file=input.files&&input.files[0];
+      if(!file) return;
+      try{const backup=JSON.parse(await file.text());await restoreBackupObject(backup);}
+      catch(e){alert('File backup tidak dapat dibaca: '+(e.message||e));}
+      finally{input.remove();backupFileInput=null;}
+    };
+    document.body.appendChild(input);input.click();
+  }
+
+  async function backupUploadCloud(){
+    try{
+      if(!sbClient){alert('Cloud belum terhubung.');return;}
+      setCloudStatus('Mengunggah data device ini…');
+      await pushToCloud();
+      await updateBackupPanelStatus();
+      setStatus('Data device ini berhasil di-upload ke cloud.');
+    }catch(e){alert('Upload cloud gagal: '+(e.message||e));}
+  }
+
+  async function backupPullCloud(){
+    try{
+      if(!sbClient){alert('Cloud belum terhubung.');return;}
+      if(!confirm('Data lokal device ini akan diganti dengan data terbaru dari cloud. Lanjutkan?')) return;
+      await pullFromCloud({silent:false});
+      await updateBackupPanelStatus();
+    }catch(e){alert('Ambil data dari cloud gagal: '+(e.message||e));}
+  }
+
+  // Kompatibilitas dengan pemanggilan lama.
+  async function backupData(){ return downloadBackupFile(); }
 
   /* ------------- restore persisted state from IndexedDB on load ------------- */
   async function restoreFromDB(){
