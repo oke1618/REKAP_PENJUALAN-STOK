@@ -17,10 +17,10 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
 body{font-family:Arial;margin:0;background:#f4f7fb;color:#172033}
-header{background:#305496;color:#fff;padding:4px 14px}
+header{background:#305496;color:#fff;padding:2px 14px}
 .wrap{max-width:1600px;margin:auto}
 .header-row{display:flex;align-items:center;justify-content:space-between;gap:10px}
-.header-left h2{margin:0;font-size:.72rem;line-height:1.15;letter-spacing:.2px}
+.header-left h2{margin:0;font-size:0;line-height:0;letter-spacing:0;height:0;overflow:hidden;visibility:hidden}
 .header-left .sub{font-size:11px;opacity:.9;margin-top:0}
 .card{background:#fff;margin:14px 0;padding:14px;border-radius:10px;box-shadow:0 2px 10px #0001}
 button{padding:9px 14px;border:0;border-radius:7px;background:#1f4e78;color:#fff;font-weight:bold;cursor:pointer}
@@ -52,17 +52,17 @@ button:disabled{opacity:.5;cursor:not-allowed}
 .faktur-card .fc-meta{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;font-size:11px;color:#475569}
 .faktur-card .fc-meta b{color:#0f172a;font-weight:700}
 .faktur-card .fc-badge{
-  display:inline-block;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:800;
-  background:#e2e8f0;color:#334155;letter-spacing:.04em;text-transform:uppercase;
+  display:inline-block;padding:2px 8px;border-radius:999px;font-size:10.5px;font-weight:600;
+  background:#e2e8f0;color:#475569;letter-spacing:0;text-transform:uppercase;
   white-space:nowrap;
 }
 .faktur-card .fc-badge.cash{
-  background:#38bdf8;color:#0c4a6e;
-  box-shadow:0 0 0 1px rgba(56,189,248,.4),0 2px 6px rgba(56,189,248,.3);
+  background:#bae6fd;color:#0c4a6e;
+  box-shadow:none;
 }
 .faktur-card .fc-badge.tempo{
-  background:#ea580c;color:#fff;
-  box-shadow:0 0 0 1px rgba(234,88,12,.35),0 2px 6px rgba(234,88,12,.25);
+  background:#fed7aa;color:#9a3412;
+  box-shadow:none;
 }
 .faktur-card .fc-nums{display:flex;justify-content:space-between;gap:10px;padding-top:6px;border-top:1px dashed #d6e0ee}
 .faktur-card .fc-num-label{font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:.04em;font-weight:700}
@@ -87,6 +87,17 @@ button:disabled{opacity:.5;cursor:not-allowed}
 
 .tabs button{background:#e2e8f0;color:#334155}
 .tabs button.active{background:#1f4e78;color:#fff}
+#page-penjualan #result.card{padding:10px 12px}
+#page-penjualan .tabs{gap:5px;margin-bottom:6px}
+#page-penjualan .tabs button{padding:6px 10px;font-size:11px;border-radius:6px;line-height:1.1}
+#page-penjualan .toolbar-row{gap:6px;margin-bottom:8px}
+#page-penjualan .toolbar-left{gap:6px}
+#page-penjualan .month-quick{gap:5px}
+#page-penjualan .month-quick label{font-size:10px}
+#page-penjualan .month-quick select{min-width:138px;padding:5px 10px;border-radius:6px;font-size:11px}
+#page-penjualan .month-quick .filter-btn{width:28px;height:28px;font-size:14px;border-radius:6px}
+#page-penjualan .col-picker-btn{padding:5px 10px;font-size:11px;border-radius:6px}
+#page-penjualan #toolbarSaveExcel{padding:5px 10px!important;border-radius:6px!important;font-size:11px!important}
 .tablebox{overflow:auto;max-height:68vh;position:relative}
 .vrow td{height:34px;box-sizing:border-box;overflow:hidden;text-overflow:ellipsis}
 .vspace td{padding:0!important;border:0!important}
@@ -106,6 +117,10 @@ tfoot td{background:#ffe699;font-weight:bold}
 .kpi b{display:block;font-size:16px;margin-top:4px;line-height:1.2;color:#0f172a;font-weight:700;letter-spacing:-.01em;position:relative;z-index:1}
 .kpi .kpi-meta{display:block;font-size:12px;margin-top:2px;color:#475569;font-weight:600;position:relative;z-index:1}
 .kpi .kpi-meta b{display:inline;font-size:12px;margin:0;color:#0f172a}
+.kpi.kpi-inline{padding-top:8px;padding-bottom:8px}
+.kpi-inline .kpi-inline-row{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-top:4px;position:relative;z-index:1}
+.kpi-inline .kpi-inline-row > b{display:inline;margin-top:0}
+.kpi-inline .kpi-inline-row .kpi-meta{display:inline;margin-top:0;white-space:nowrap}
 @media(max-width:900px){.kpis{grid-template-columns:repeat(2,1fr)}}
 .status{font-size:13px;margin-top:8px;color:#334155}
 .col-picker{position:relative;margin-left:0}
@@ -133,7 +148,7 @@ tfoot td{background:#ffe699;font-weight:bold}
 .filter-reset{background:#e2e8f0;color:#334155}
 .filter-info{font-size:11px;color:#64748b;margin-top:8px;line-height:1.35}
 .dd{position:relative}
-.dd-toggle{display:flex;align-items:center;gap:5px;background:#fff;color:#1f4e78;border:0;border-radius:6px;padding:4px 10px;font-weight:bold;font-size:12px;cursor:pointer;box-shadow:0 1px 4px #0002}
+.dd-toggle{display:flex;align-items:center;gap:5px;background:#fff;color:#1f4e78;border:0;border-radius:5px;padding:2px 8px;font-weight:bold;font-size:12px;cursor:pointer;box-shadow:0 1px 4px #0002;line-height:1.1}
 .dd-toggle:hover{background:#f0f4fa}
 .dd-toggle .chev{font-size:11px;transition:transform .2s}
 .dd.open .dd-toggle .chev{transform:rotate(180deg)}
@@ -191,7 +206,7 @@ tfoot td{background:#ffe699;font-weight:bold}
 .gmodal-ghost{background:#e2e8f0;color:#334155}
 .main-tab{
   background:rgba(255,255,255,.18);color:#fff;border:1px solid rgba(255,255,255,.32);
-  padding:5px 14px;font-size:12px;font-weight:700;border-radius:6px;cursor:pointer;
+  padding:3px 10px;font-size:12px;font-weight:700;border-radius:5px;cursor:pointer;line-height:1.1;
   letter-spacing:.4px;transition:background .15s ease;
 }
 .main-tab:hover{background:rgba(255,255,255,.30)}
@@ -344,8 +359,8 @@ tfoot td{background:#ffe699;font-weight:bold}
 .ket-badge.ok{background:#dcfce7;color:#166534}
 .ket-badge.bad{background:#fee2e2;color:#b42318}
 .ket-badge.warn{background:#dbeafe;color:#1d4ed8;white-space:normal}
-.ket-badge.alert{background:#dc2626;color:#fff;font-weight:800;white-space:normal;box-shadow:0 0 0 2px #fecaca;animation:ketAlertPulse 1.4s ease-in-out infinite}
-@keyframes ketAlertPulse{0%,100%{box-shadow:0 0 0 2px #fecaca}50%{box-shadow:0 0 0 5px #fca5a5}}
+.ket-badge.alert{background:#dc2626;color:#fff;font-weight:800;white-space:normal;box-shadow:0 0 0 1px #fecaca;animation:ketAlertPulse 1.4s ease-in-out infinite}
+@keyframes ketAlertPulse{0%,100%{box-shadow:0 0 0 1px #fecaca}50%{box-shadow:0 0 0 3px #fca5a5}}
 #cekRingkasanTable td, #cekRingkasanTable th{white-space:nowrap}
 #cekRingkasanTable tfoot td{background:#eef2fb;font-weight:800}
 #cekRupaTable td, #cekRupaTable th{white-space:nowrap}
@@ -488,14 +503,14 @@ body.dark .faktur-card .fc-faktur{color:#93c5fd}
 body.dark .faktur-card .fc-tgl{color:#94a3b8}
 body.dark .faktur-card .fc-meta{color:#94a3b8}
 body.dark .faktur-card .fc-meta b{color:#e2e8f0}
-body.dark .faktur-card .fc-badge{background:#475569;color:#e2e8f0}
+body.dark .faktur-card .fc-badge{background:#334155;color:#cbd5e1}
 body.dark .faktur-card .fc-badge.cash{
-  background:#38bdf8;color:#0c4a6e;
-  box-shadow:0 0 0 1px rgba(56,189,248,.55),0 0 12px rgba(56,189,248,.3);
+  background:#155e75;color:#cffafe;
+  box-shadow:none;
 }
 body.dark .faktur-card .fc-badge.tempo{
-  background:#f97316;color:#1c0a00;
-  box-shadow:0 0 0 1px rgba(249,115,22,.5),0 0 12px rgba(249,115,22,.25);
+  background:#7c2d12;color:#fed7aa;
+  box-shadow:none;
 }
 body.dark .faktur-card .fc-nums{border-top-color:#334155}
 body.dark .faktur-card .fc-num-label{color:#94a3b8}
@@ -527,12 +542,12 @@ body.dark .busy{background:rgba(15,23,42,.7);color:#93c5fd}
 body.dark .empty{color:#94a3b8}
 body.dark .theme-btn{
   background:#fff;border:1px solid rgba(255,255,255,.75);
-  color:#24518e;font-size:12px;padding:5px 10px;border-radius:6px;cursor:pointer;font-weight:700
+  color:#24518e;font-size:12px;padding:3px 8px;border-radius:5px;cursor:pointer;font-weight:700;line-height:1.1
 }
 body.dark .theme-btn:hover{background:rgba(255,255,255,.28)}
 .theme-btn{
   background:#fff;border:1px solid rgba(255,255,255,.75);
-  color:#24518e;font-size:12px;padding:5px 10px;border-radius:6px;cursor:pointer;font-weight:700
+  color:#24518e;font-size:12px;padding:3px 8px;border-radius:5px;cursor:pointer;font-weight:700;line-height:1.1
 }
 .theme-btn:hover{background:rgba(255,255,255,.28)}
 
@@ -541,7 +556,7 @@ body.dark .theme-btn:hover{background:rgba(255,255,255,.28)}
 .backup-btn{
   display:inline-flex;align-items:center;gap:5px;
   background:#fff;border:1px solid rgba(255,255,255,.75);
-  color:#24518e;font-size:12px;padding:5px 10px;border-radius:6px;
+  color:#24518e;font-size:12px;padding:3px 8px;border-radius:5px;
   cursor:pointer;font-weight:700;white-space:nowrap;
 }
 .backup-btn:hover{background:#f3f7fc}
@@ -582,10 +597,8 @@ body.dark .backup-action.warn{background:#422006;color:#fdba74;border-color:#924
 <body>
 <header>
   <div class="wrap header-row">
-    <div class="header-left">
-      <h2>REKAP PENJUALAN &amp; DATA STOK</h2>
-    </div>
-    <button type="button" id="installBtn" style="display:none;padding:6px 10px;border:1px solid rgba(255,255,255,.5);border-radius:6px;background:rgba(255,255,255,.12);color:#fff;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap">⬇ Instal Aplikasi</button>
+    <div class="header-left"></div>
+    <button type="button" id="installBtn" style="display:none;padding:3px 8px;border:1px solid rgba(255,255,255,.5);border-radius:5px;background:rgba(255,255,255,.12);color:#fff;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;line-height:1.1">⬇ Instal Aplikasi</button>
     <div style="display:flex;align-items:center;gap:10px">
     <nav class="main-tabs" role="tablist" id="mainTabs">
       <button type="button" class="main-tab active" data-tab="penjualan">Penjualan</button>
@@ -671,15 +684,19 @@ body.dark .backup-action.warn{background:#422006;color:#fdba74;border-color:#924
   <div id="summary" style="display:none">
     <div class="kpis">
       <div class="kpi"><small>TOTAL FAKTUR</small><b id="f">0</b></div>
-      <div class="kpi">
+      <div class="kpi kpi-inline">
         <small>PRODUK FITRI</small>
-        <b id="fitriQty">Qty 0</b>
-        <span class="kpi-meta">Nominal <b id="fitriNom">Rp 0</b></span>
+        <div class="kpi-inline-row">
+          <b id="fitriQty">Qty 0</b>
+          <span class="kpi-meta">Nominal <b id="fitriNom">Rp 0</b></span>
+        </div>
       </div>
-      <div class="kpi">
+      <div class="kpi kpi-inline">
         <small>PRODUK RUPA RUPA</small>
-        <b id="rupaQty">Qty 0</b>
-        <span class="kpi-meta">Nominal <b id="rupaNom">Rp 0</b></span>
+        <div class="kpi-inline-row">
+          <b id="rupaQty">Qty 0</b>
+          <span class="kpi-meta">Nominal <b id="rupaNom">Rp 0</b></span>
+        </div>
       </div>
       <div class="kpi"><small>TOTAL PENJUALAN</small><b id="s">Rp 0</b></div>
     </div>
@@ -690,6 +707,7 @@ body.dark .backup-action.warn{background:#422006;color:#fdba74;border-color:#924
       <button onclick="show('s7',this)">Sales per Produk</button>
       <button class="active" onclick="show('s6',this)">Faktur</button>
       <button onclick="show('s1',this)">Produk</button>
+      <button onclick="show('s8',this)">Profit/Faktur</button>
       <button onclick="show('s2',this)">Profit Per Pembayaran</button>
       <button onclick="show('s3',this)">Profit Penjualan per Produk</button>
       <button onclick="show('s4',this)">Rekap per Sales</button>
@@ -778,6 +796,7 @@ body.dark .backup-action.warn{background:#422006;color:#fdba74;border-color:#924
       <div id="panel_s7" class="view" style="display:none"></div>
       <div id="panel_s6" class="view" style="display:none"></div>
       <div id="panel_s1" class="view" style="display:none"></div>
+      <div id="panel_s8" class="view" style="display:none"></div>
       <div id="panel_s2" class="view" style="display:none"></div>
       <div id="panel_s3" class="view" style="display:none"></div>
       <div id="panel_s4" class="view" style="display:none"></div>
@@ -810,7 +829,14 @@ body.dark .backup-action.warn{background:#422006;color:#fdba74;border-color:#924
           <div class="file-row"><input id="gudangFile" type="file" accept=".xlsx,.xls"></div>
           <div class="btn-row">
             <button type="button" onclick="processGudangFile()">Proses Excel Gudang</button>
-            <button type="button" class="danger-btn" onclick="clearGudangData()">Hapus SEMUA Data Gudang</button>
+          </div>
+          <div class="bulk-box">
+            <div class="menu-label">Hapus data per bulan</div>
+            <select id="gudangDeleteMonth" style="margin-bottom:8px"><option value="">Pilih bulan…</option></select>
+            <div class="btn-row">
+              <button type="button" class="danger-btn" onclick="deleteGudangMonth()">Hapus Bulan Terpilih</button>
+              <button type="button" class="danger-btn" onclick="clearGudangData()">Hapus SEMUA Data Gudang</button>
+            </div>
           </div>
           <div id="gudangStatus" class="hint" style="margin-top:8px">Belum ada data gudang.</div>
         </div>
@@ -971,6 +997,15 @@ body.dark .backup-action.warn{background:#422006;color:#fdba74;border-color:#924
   /* Urutan kolom tab Sales per Produk (sesuai template) */
   const SO_S7 = ['RAJU','JOSSY','HAFID','GC','PARIMIN'];
   const N  = x => Number(x) || 0;
+  // Escape teks biasa untuk ditaruh sebagai konten HTML (mencegah tag/atribut bocor kalau nama produk mengandung < & " dst).
+  function escHtml(s){
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+  // Escape teks untuk dipakai sebagai literal string JS di dalam atribut onclick="...('...')".
+  // Urutan penting: backslash dulu, baru kutip satu; lalu escape untuk konteks atribut HTML (" dan &).
+  function escJsAttr(s){
+    return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/&/g,'&amp;').replace(/"/g,'&quot;');
+  }
   const U  = x => String(x ?? '').trim().toUpperCase();
   /* Normalisasi: PRTIMIN di data → PARIMIN */
   function normSales(s){
@@ -1049,10 +1084,19 @@ body.dark .backup-action.warn{background:#422006;color:#fdba74;border-color:#924
     return result.data;
   }
   // Debounce agar tidak spam network saat banyak perubahan beruntun.
+  // pushInFlight menandai proses upload yang sedang berjalan (bukan cuma menunggu debounce),
+  // supaya beforeunload tahu kapan benar-benar masih ada yang belum terkirim.
+  let pushInFlight = false;
   function schedulePush(){
     clearTimeout(pushTimer);
     setCloudStatus('Menyinkronkan…');
-    pushTimer = setTimeout(pushToCloud, 1200);
+    pushTimer = setTimeout(async () => {
+      pushTimer = null; // timer sudah jalan, bukan lagi "pending" — reset supaya tidak nyangkut truthy selamanya
+      pushInFlight = true;
+      try { await pushToCloud(); }
+      catch(e){ console.error('pushToCloud gagal:', e); }
+      finally { pushInFlight = false; }
+    }, 1200);
   }
 
   // Ambil data terbaru dari cloud dan timpa data lokal (dipanggil saat pertama buka & saat ada update dari device lain).
@@ -1064,13 +1108,18 @@ body.dark .backup-action.warn{background:#422006;color:#fdba74;border-color:#924
       if (error) throw error;
       if (data && data.data){
         isSyncingFromCloud = true;
-        const snap = data.data;
-        await db.tx.clear();
-        if (snap.tx && snap.tx.length) await db.tx.bulkPut(snap.tx);
-        await db.meta.clear();
-        if (snap.meta && snap.meta.length) await db.meta.bulkPut(snap.meta);
-        isSyncingFromCloud = false;
-        setCloudStatus('Sinkron dari cloud • ' + new Date().toLocaleTimeString('id-ID'));
+        try {
+          const snap = data.data;
+          await db.tx.clear();
+          if (snap.tx && snap.tx.length) await db.tx.bulkPut(snap.tx);
+          await db.meta.clear();
+          if (snap.meta && snap.meta.length) await db.meta.bulkPut(snap.meta);
+          setCloudStatus('Sinkron dari cloud • ' + new Date().toLocaleTimeString('id-ID'));
+        } finally {
+          // Selalu reset, walau db.tx.clear()/bulkPut() gagal di tengah jalan —
+          // supaya sinkron ke cloud tidak macet diam-diam selamanya.
+          isSyncingFromCloud = false;
+        }
       } else {
         // Belum ada data di cloud: kalau device ini punya data lokal, unggah dulu sebagai data awal.
         const localCount = await db.tx.count();
@@ -1351,6 +1400,7 @@ self.onmessage = function(e){
   async function processFile(){
     const f = document.getElementById('file').files[0];
     if (!f) return alert('Pilih file Excel.');
+    if (_inFlightWorker) return alert('Masih memproses file sebelumnya, tunggu sampai selesai.');
     _parseFileName = f.name;
     _pendingChunks = [];
     showBusy('Membaca file ' + f.name + '...');
@@ -1360,7 +1410,7 @@ self.onmessage = function(e){
     const w = getWorker();
     if (w){
       _inFlightWorker = true;
-      try { w.postMessage(buf, [buf]); } catch(e){ await fallbackSyncParse(buf); }
+      try { w.postMessage(buf, [buf]); } catch(e){ _inFlightWorker = false; await fallbackSyncParse(buf); }
     } else {
       await fallbackSyncParse(buf);
     }
@@ -1379,12 +1429,14 @@ self.onmessage = function(e){
       setStatus('Memparsing Excel... (' + _pendingChunks.length.toLocaleString('id-ID') + ' baris)');
     } else if (m.type === 'error'){
       _pendingChunks = [];
+      _inFlightWorker = false;
       setStatus('Gagal membaca Excel: ' + m.message);
       hideBusy();
     } else if (m.type === 'done'){
       const monthList = (m.months || []).filter(Boolean);
       const incoming = _pendingChunks;
       _pendingChunks = [];
+      _inFlightWorker = false;
       try {
         await commitIncomingTx(incoming, monthList);
         const merged = await mergeMetaFromIncoming({
@@ -1432,8 +1484,16 @@ self.onmessage = function(e){
       : '';
     setStatus('Berhasil diproses: ' + _parseFileName + ' (total tersimpan ' + totalRows.toLocaleString('id-ID') + ' baris)' + extra + (useIDB ? ' — IndexedDB' : ' — in-memori'));
     closeDd();
+    if (sbClient) {
+      setCloudStatus('Menyinkronkan…');
+      try {
+        await pushToCloud();
+      } catch(e){
+        console.warn('Auto-sync ke cloud gagal setelah import', e);
+        setCloudStatus('Gagal sync otomatis — klik "Upload Cloud" manual supaya data tidak hilang.');
+      }
+    }
     hideBusy();
-    schedulePush();
   }
 
   /* ------------- materialise internal-camel rows to UI form ------------- */
@@ -2057,7 +2117,7 @@ self.onmessage = function(e){
     s4rupa.sort((a,b) => SO.indexOf(a[0]) - SO.indexOf(b[0]));
     R = { s1, s2, s3, s4fitri, s4rupa, s5, qty, sales, hpp, profit, cs, ts, cp, tp, SO2, faktur, fitriQty, fitriSales, rupaQty, rupaSales };
     // reset halaman rekap saat data berubah
-    rekapPage = { s1:0, s2:0, s3:0, s5:0, s6:0 };
+    rekapPage = { s1:0, s2:0, s3:0, s5:0, s6:0, s8:0 };
   }
 
   // Tanda tangan kombinasi filter yang sedang aktif, dipakai sebagai key cache hasil build().
@@ -2074,7 +2134,7 @@ self.onmessage = function(e){
     if (cached){
       R = cached;
       dataVersion++;               // tetap anggap versi tampilan baru agar tab lain re-render
-      rekapPage = { s1:0, s2:0, s3:0, s5:0, s6:0 };
+      rekapPage = { s1:0, s2:0, s3:0, s5:0, s6:0, s8:0 };
       return;
     }
     build(data);
@@ -2213,6 +2273,14 @@ self.onmessage = function(e){
       const head=['NO','TANGGAL','NO. FAKTUR','SALES','PRODUK','QTY','SATUAN','HARGA JUAL','DISC','TOTAL','NOMINAL FAKTUR','PROFIT PER FAKTUR','PEMBAYARAN','CUSTOMER'];
       const rows=fRows.map((row,i)=>{const x=row.x;return [i+1,fmtTgl(x.Tanggal),row.faktur,x.Sales||row.sales||'',x.Produk||'',N(x.Jumlah),x.Satuan||'',N(x['Harga Jual']),N(x.Discount),N(x.Total),row.isFirst?row.nominal:'',row.isFirst?row.profit:'',x.Pembayaran||row.bayar||'',x.Customer||row.customer||''];});
       addReportSheet(wb,'Faktur','Rekap per Faktur',head,rows,['TOTAL','','','','',r.qty,'','','',r.sales,r.sales,r.profit,'','']);
+    } else if(tab==='s8'){
+      const groups=buildFakturGroups();
+      const head=['NO','TANGGAL','NO. FAKTUR','SALES','CUSTOMER','PEMBAYARAN','NOMINAL FAKTUR','PROFIT FAKTUR','MARGIN %'];
+      const rows=groups.map((g,i)=>[i+1,fmtTgl(g.tgl),g.faktur,g.sales||'',g.customer||'',g.bayar||'',g.nominal,g.profit,g.nominal?Math.round(g.profit/g.nominal*10000)/100:0]);
+      const totNominal=groups.reduce((a,g)=>a+g.nominal,0);
+      const totProfit=groups.reduce((a,g)=>a+g.profit,0);
+      const avgM=totNominal?(totProfit/totNominal*100):0;
+      addReportSheet(wb,'Profit Faktur','Profit per Faktur',head,rows,['TOTAL','','','','','',totNominal,totProfit,Math.round(avgM*100)/100]);
     } else if(tab==='s7'){
       const pivot=buildS7Pivot(s7DateFilter);
       const head=['TGL','PRODUK',...SO_S7.map(s=>s==='PARIMIN'?'PRTIMIN':s),'TOTAL QTY'];
@@ -2225,7 +2293,7 @@ self.onmessage = function(e){
       const total=['TOTAL','',...SO_S7.map(s=>pivot.grand[s]||0),pivot.grandTotal||0];
       addReportSheet(wb,'Sales per Produk','Qty Penjualan Per Sales Per Tgl',head,rows,total);
     }
-    const name='Laporan_'+({s0:'Transaksi',s1:'Produk',s2:'Profit_Pembayaran',s3:'Profit_Produk',s4:'Rekap_Sales',s5:'Margin_Produk',s6:'Faktur',s7:'Sales_per_Produk'}[tab]||'Penjualan')+'.xlsx';
+    const name='Laporan_'+({s0:'Transaksi',s1:'Produk',s2:'Profit_Pembayaran',s3:'Profit_Produk',s4:'Rekap_Sales',s5:'Margin_Produk',s6:'Faktur',s7:'Sales_per_Produk',s8:'Profit_Faktur'}[tab]||'Penjualan')+'.xlsx';
     XLSX.writeFile(wb,name);
   }
 
@@ -2401,7 +2469,7 @@ self.onmessage = function(e){
   }
 
   /* Paginasi tab rekap (siap data setahun / banyak produk) */
-  let rekapPage = { s1:0, s2:0, s3:0, s5:0, s6:0 };
+  let rekapPage = { s1:0, s2:0, s3:0, s5:0, s6:0, s8:0 };
   const REKAP_PAGE_SIZE = 60;
   function rekapPagerHtml(tab, total){
     const pages = Math.max(1, Math.ceil(total / REKAP_PAGE_SIZE));
@@ -2581,6 +2649,20 @@ self.onmessage = function(e){
              tbl(h, pack(R.s4rupa||[]), tot(R.s4rupa||[]));
     } else if (t === 's6'){
       return reportBar('s6','Rekap per Faktur') + renderRekapPerFaktur();
+    } else if (t === 's8'){
+      const groups = buildFakturGroups();
+      const h = ['NO','TANGGAL','NO. FAKTUR','SALES','CUSTOMER','PEMBAYARAN','NOMINAL FAKTUR','PROFIT FAKTUR','MARGIN %'];
+      const pageRows = sliceRekap('s8', groups);
+      const base = (rekapPage.s8 || 0) * REKAP_PAGE_SIZE;
+      const d = pageRows.map((g,i) => [
+        base+i+1, fmtTgl(g.tgl), g.faktur, g.sales || '', g.customer || '', g.bayar || '',
+        rp(g.nominal), rp(g.profit), (g.nominal ? (Math.round(g.profit/g.nominal*10000)/100) : 0).toLocaleString('id-ID') + ' %'
+      ]);
+      const totNominal = groups.reduce((a,g)=>a+g.nominal,0);
+      const totProfit = groups.reduce((a,g)=>a+g.profit,0);
+      const avgM = totNominal ? (totProfit/totNominal*100) : 0;
+      return reportBar('s8','Profit per Faktur') + rekapPagerHtml('s8', groups.length) +
+        tbl(h, d, ['TOTAL','','','','','', rp(totNominal), rp(totProfit), (Math.round(avgM*100)/100).toLocaleString('id-ID') + ' %']);
     } else {
       const h = ['NO','PRODUK','QTY','SATUAN','TOTAL PENJUALAN','TOTAL HPP','PROFIT','MARGIN %'];
       const pageRows = sliceRekap('s5', R.s5 || []);
@@ -3866,12 +3948,22 @@ self.onmessage = function(e){
 
     const products = Array.from(new Set([...(existing.products||[]), ...(incoming.products||[])]));
 
-    // Saldo awal: pertahankan punya data lama (paling awal secara historis) untuk produk yang
-    // sudah ada; untuk produk baru yang belum pernah muncul, pakai saldo awal dari file baru.
+    // Saldo awal: pertahankan punya data lama untuk produk yang sudah ada HANYA kalau file
+    // baru ini murni lanjutan ke depan (tanggal paling awal di file baru > tanggal paling awal
+    // yang sudah tersimpan). Kalau file baru mencakup/menimpa tanggal paling awal yang sudah
+    // ada (mis. re-upload seluruh sheet karena Saldo Awal-nya dikoreksi), Saldo Awal dari file
+    // baru dipakai — bukan dibuang diam-diam. Produk yang benar-benar baru selalu pakai saldo
+    // awal dari file baru.
+    const existingMinTs = existing.rows.length ? Math.min(...existing.rows.map(r => r.ts)) : Infinity;
+    const incomingMinTs = (incoming.rows||[]).length ? Math.min(...incoming.rows.map(r => r.ts)) : Infinity;
+    const incomingIsCorrection = incomingMinTs <= existingMinTs;
+
     const saldoAwal = {};
     products.forEach(p => {
-      if (Object.prototype.hasOwnProperty.call(existing.saldoAwal||{}, p)) saldoAwal[p] = existing.saldoAwal[p];
-      else saldoAwal[p] = (incoming.saldoAwal||{})[p] ?? 0;
+      const hasOld = Object.prototype.hasOwnProperty.call(existing.saldoAwal||{}, p);
+      const hasNew = Object.prototype.hasOwnProperty.call(incoming.saldoAwal||{}, p);
+      if (hasOld && !(incomingIsCorrection && hasNew)) saldoAwal[p] = existing.saldoAwal[p];
+      else saldoAwal[p] = (incoming.saldoAwal||{})[p] ?? (hasOld ? existing.saldoAwal[p] : 0);
     });
 
     // Gabungkan baris berdasarkan ts (tanggal). Baris dari incoming menang jika bentrok.
@@ -3945,6 +4037,58 @@ self.onmessage = function(e){
     schedulePush();
   }
 
+  /* Hitung ulang STOK SFA (running balance) semua produk dari saldoAwal,
+     dipakai setelah baris dihapus/diubah supaya stok tetap berkesinambungan. */
+  function recomputeGudangStok(data){
+    if (!data || !data.rows) return data;
+    (data.products||[]).forEach(p => {
+      let running = N((data.saldoAwal||{})[p]);
+      data.rows.forEach(r => {
+        if (!r.values[p]) r.values[p] = {masuk:null, keluar:null, stok:null};
+        const v = r.values[p];
+        running = running + N(v.masuk) - N(v.keluar);
+        v.stok = running;
+      });
+    });
+    return data;
+  }
+
+  function populateGudangDeleteMonth(){
+    const sel = document.getElementById('gudangDeleteMonth');
+    if (!sel) return;
+    const cur = sel.value;
+    if (!gudangData || !gudangData.rows || !gudangData.rows.length){
+      sel.innerHTML = '<option value="">Belum ada data</option>';
+      return;
+    }
+    const monthKeys = [...new Set(gudangData.rows.map(r => monthKeyUTC(r.tanggal)).filter(Boolean))].sort().reverse();
+    sel.innerHTML = '<option value="">Pilih bulan…</option>' +
+      monthKeys.map(m => '<option value="' + m + '">' + monthLabel(m) + '</option>').join('');
+    if (monthKeys.includes(cur)) sel.value = cur;
+  }
+
+  async function deleteGudangMonth(){
+    const sel = document.getElementById('gudangDeleteMonth');
+    const month = sel && sel.value;
+    if (!month) return alert('Pilih bulan yang mau dihapus terlebih dahulu.');
+    if (!gudangData || !gudangData.rows || !gudangData.rows.length) return;
+    if (!confirm('Hapus data gudang bulan ' + monthLabel(month) + ' saja? Bulan lain tidak akan terpengaruh. Tindakan ini tidak bisa dibatalkan.')) return;
+    gudangData.rows = gudangData.rows.filter(r => monthKeyUTC(r.tanggal) !== month);
+    recomputeGudangStok(gudangData);
+    if (!gudangData.rows.length) gudangData = null;
+    if (useIDB){
+      try{
+        if (gudangData) await db.meta.put({key:'gudangData', value:gudangData});
+        else await db.meta.delete('gudangData');
+      } catch(e){ console.warn('save gudang', e); }
+    }
+    renderGudangPage(gudangData);
+    populateGudangDeleteMonth();
+    renderCekFitri();
+    setGudangStatus('Data gudang bulan ' + monthLabel(month) + ' sudah dihapus.');
+    schedulePush();
+  }
+
   async function saveGudangToDB(data){
     if (useIDB){ try{ await db.meta.put({key:'gudangData', value:data}); } catch(e){ console.warn('save gudang', e); } }
     schedulePush();
@@ -3988,6 +4132,7 @@ self.onmessage = function(e){
       kpiBox.innerHTML = '<div style="padding:10px 4px;color:#64748b;font-size:13px;align-self:center">Belum ada data gudang. Klik ⚙️ di kanan untuk upload file Excel.</div>';
       thead.innerHTML = '';
       tbody.innerHTML = '<tr><td style="text-align:center;padding:24px;color:#64748b">Belum ada data. Klik ⚙️ di atas untuk upload file Excel.</td></tr>';
+      populateGudangDeleteMonth();
       return;
     }
 
@@ -4047,8 +4192,8 @@ self.onmessage = function(e){
       for (let i = rowsFiltered.length - 1; i >= 0; i--){ if (rowsFiltered[i].values[p] && rowsFiltered[i].values[p].stok !== null){ last = rowsFiltered[i].values[p].stok; break; } }
       const totMasuk  = rowsFiltered.reduce((s,r) => s + N(r.values[p] && r.values[p].masuk), 0);
       const totKeluar = rowsFiltered.reduce((s,r) => s + N(r.values[p] && r.values[p].keluar), 0);
-      return '<div class="gkpi" onclick="openGInputModal(\'' + p.replace(/'/g,"\\'") + '\')" title="Klik untuk input Masuk / Keluar">' +
-             '<span class="gk-label">' + p + '</span>' +
+      return '<div class="gkpi" onclick="openGInputModal(\'' + escJsAttr(p) + '\')" title="Klik untuk input Masuk / Keluar">' +
+             '<span class="gk-label">' + escHtml(p) + '</span>' +
              '<span class="gk-stok">Stok: ' + nfQty(last) + '</span>' +
              '<span class="gk-meta">Masuk <b>' + nfQty(totMasuk) + '</b> &nbsp;•&nbsp; Keluar <b>' + nfQty(totKeluar) + '</b></span>' +
              '<span class="gk-hint">✏️ klik untuk input</span>' +
@@ -4057,7 +4202,7 @@ self.onmessage = function(e){
 
     // Header (2 rows)
     thead.innerHTML =
-      '<tr><th rowspan="2">TANGGAL</th>' + products.map(p => '<th colspan="3">' + p + '</th>').join('') + '</tr>' +
+      '<tr><th rowspan="2">TANGGAL</th>' + products.map(p => '<th colspan="3">' + escHtml(p) + '</th>').join('') + '</tr>' +
       '<tr>' + products.map(() => '<th>MASUK</th><th>KELUAR</th><th>STOK SFA</th>').join('') + '</tr>';
 
     // Body
@@ -4070,6 +4215,7 @@ self.onmessage = function(e){
       }).join('') + '</tr>';
     }).join('');
     tbody.innerHTML = body;
+    populateGudangDeleteMonth();
   }
 
   /* ------------- Modal Input Stok Gudang (klik kartu produk) ------------- */
@@ -4245,6 +4391,16 @@ self.onmessage = function(e){
     }
   })();
 
+  // Cegah pindah/tutup/refresh halaman saat masih ada upload ke cloud yang tertunda/berjalan,
+  // supaya data yang baru saja diubah tidak sempat tertimpa data lama dari cloud saat reload.
+  window.addEventListener('beforeunload', function(e){
+    if (pushTimer || pushInFlight || isSyncingFromCloud) {
+      e.preventDefault();
+      e.returnValue = '';
+      return '';
+    }
+  });
+
   /* ------------- PWA: service worker + tombol instal ------------- */
   if ('serviceWorker' in navigator){
     window.addEventListener('load', () => {
@@ -4273,8 +4429,6 @@ self.onmessage = function(e){
 
 <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v3d52b47920f24c319d37e2661827c42b1787588026925" integrity="sha512-d9sL6GJLXn6fInD1+TVXhTcQOsmxeHfmHAvwGDIxp5TO+uo1fiWW7mHomMj4MLRlCsJDTqXzWLHJFFlPCEIj/A==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79"}' crossorigin="anonymous"></script>
 
-<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495" integrity="sha512-iIg7k2xntmwu6/uSb5tpc/hySgZc4eoL31yB29W6tJFo2akwjPWcEqnCEdJvGexCL0KEQwVYv5BlowfhVz26hg==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","spa":2}' crossorigin="anonymous"></script>
-<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495" integrity="sha512-iIg7k2xntmwu6/uSb5tpc/hySgZc4eoL31yB29W6tJFo2akwjPWcEqnCEdJvGexCL0KEQwVYv5BlowfhVz26hg==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","spa":2}' crossorigin="anonymous"></script>
 <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495" integrity="sha512-iIg7k2xntmwu6/uSb5tpc/hySgZc4eoL31yB29W6tJFo2akwjPWcEqnCEdJvGexCL0KEQwVYv5BlowfhVz26hg==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","spa":2}' crossorigin="anonymous"></script>
 </body>
 </html>
