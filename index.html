@@ -218,6 +218,39 @@ tfoot td{background:#ffe699;font-weight:bold}
 .gmodal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
 .gmodal-actions button{padding:9px 16px;font-size:13px}
 .gmodal-ghost{background:#e2e8f0;color:#334155}
+/* ===== Modal peringatan selisih Harga Beli (HTML vs Excel baru) ===== */
+.hbdiff-box{background:#fff;border-radius:14px;padding:20px 22px 18px;width:100%;max-width:720px;max-height:86vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(15,23,42,.35)}
+.hbdiff-box h3{margin:0 0 4px;font-size:16px;color:#b45309}
+.hbdiff-sub{font-size:12px;color:#64748b;margin-bottom:12px;line-height:1.5}
+.hbdiff-list{overflow:auto;border:1px solid #e2e8f0;border-radius:10px}
+.hbdiff-row{display:grid;grid-template-columns:1.3fr 0.8fr 1.1fr 1.1fr 1.3fr;gap:10px;align-items:center;padding:10px 12px;border-bottom:1px solid #eef2f7;font-size:12.5px}
+.hbdiff-row:last-child{border-bottom:0}
+.hbdiff-row.hbdiff-head{background:#f8fafc;font-weight:700;color:#475569;text-transform:uppercase;font-size:10.5px;letter-spacing:.03em;position:sticky;top:0}
+.hbdiff-produk{font-weight:700;color:#172033;word-break:break-word}
+.hbdiff-bulan{color:#64748b}
+.hbdiff-price-old,.hbdiff-price-new{font-variant-numeric:tabular-nums}
+.hbdiff-price-old{color:#b42318}
+.hbdiff-price-new{color:#1e7a3c}
+.hbdiff-choice{display:flex;gap:6px;flex-wrap:wrap}
+.hbdiff-choice label{display:flex;align-items:center;gap:4px;font-size:11.5px;background:#f1f5f9;border:1px solid #cbd5e1;border-radius:20px;padding:4px 9px;cursor:pointer}
+.hbdiff-choice input{margin:0}
+.hbdiff-choice label.active-html{background:#fff3e6;border-color:#f59e0b;color:#92400e}
+.hbdiff-choice label.active-excel{background:#e9f9ef;border-color:#22c55e;color:#166534}
+.hbdiff-actions{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:16px}
+.hbdiff-actions .hbdiff-bulk{display:flex;gap:6px}
+.hbdiff-actions .hbdiff-bulk button{font-size:11px;padding:6px 10px;background:#e2e8f0;color:#334155}
+.hbdiff-actions .hbdiff-main{display:flex;gap:8px}
+.hbdiff-cancel{background:#e2e8f0;color:#334155}
+body.dark .hbdiff-box{background:#1e293b;color:#e2e8f0}
+body.dark .hbdiff-box h3{color:#fbbf24}
+body.dark .hbdiff-sub{color:#94a3b8}
+body.dark .hbdiff-list{border-color:#334155}
+body.dark .hbdiff-row{border-color:#334155}
+body.dark .hbdiff-row.hbdiff-head{background:#0f172a;color:#94a3b8}
+body.dark .hbdiff-produk{color:#f1f5f9}
+body.dark .hbdiff-choice label{background:#0f172a;border-color:#475569;color:#cbd5e1}
+body.dark .hbdiff-actions .hbdiff-bulk button{background:#334155;color:#e2e8f0}
+body.dark .hbdiff-cancel{background:#334155;color:#e2e8f0}
 .main-tab{
   background:rgba(255,255,255,.18);color:#fff;border:1px solid rgba(255,255,255,.32);
   padding:3px 10px;font-size:12px;font-weight:700;border-radius:5px;cursor:pointer;line-height:1.1;
@@ -902,6 +935,30 @@ body.dark .backup-action.warn{background:#422006;color:#fdba74;border-color:#924
   </div>
 </div>
 
+<!-- Modal peringatan: Harga Beli di HTML berbeda dengan Harga Beli di Excel yang baru diupload -->
+<div class="gmodal-overlay" id="hbDiffOverlay">
+  <div class="hbdiff-box">
+    <h3>⚠️ Harga Beli Berbeda Ditemukan</h3>
+    <div class="hbdiff-sub">Beberapa produk pada file Excel yang baru diupload punya <b>Harga Beli</b> yang berbeda dari yang sudah tersimpan di aplikasi ini. Silakan tentukan per produk: samakan dengan harga di aplikasi, atau tetap pakai harga dari Excel.</div>
+    <div class="hbdiff-list">
+      <div class="hbdiff-row hbdiff-head">
+        <div>Produk</div><div>Bulan</div><div>Harga di HTML</div><div>Harga di Excel</div><div>Keputusan</div>
+      </div>
+      <div id="hbDiffRows"></div>
+    </div>
+    <div class="hbdiff-actions">
+      <div class="hbdiff-bulk">
+        <button type="button" onclick="hbDiffSetAll('html')">Samakan Semua ke HTML</button>
+        <button type="button" onclick="hbDiffSetAll('excel')">Tetap Semua dari Excel</button>
+      </div>
+      <div class="hbdiff-main">
+        <button type="button" class="hbdiff-cancel" onclick="hbDiffCancel()">Batalkan Import</button>
+        <button type="button" onclick="hbDiffConfirm()">Lanjutkan Import</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div id="page-cek" style="display:none">
   <div class="cek-subtabs" role="tablist">
     <button type="button" class="cek-subtab active" data-cek="fitri" onclick="switchCekSub('fitri',this)">🧴 Fitri</button>
@@ -1349,6 +1406,139 @@ self.onmessage = function(e){
     return {products, sales, months};
   }
 
+  /* ------------- Deteksi & konfirmasi selisih Harga Beli (data lama di HTML vs Excel baru) ------------- */
+  async function getOldRowsForMonths(monthList){
+    const monthSet = new Set((monthList||[]).filter(Boolean));
+    if (!monthSet.size) return [];
+    if (useIDB){
+      try { return await db.tx.where('bulan').anyOf([...monthSet]).toArray(); }
+      catch(e){ console.warn('getOldRowsForMonths', e); return []; }
+    }
+    return rows.filter(x => monthSet.has(x.bulan));
+  }
+
+  /* Kelompokkan baris per produk+bulan -> semua Harga Beli unik yang muncul + harga yang berlaku paling akhir (tanggal terbaru). */
+  function buildHargaBeliGroups(list){
+    const map = new Map();
+    for (const r of (list || [])){
+      const produk = U(r.produk);
+      const bulan  = r.bulan;
+      const hb     = N(r.hargaBeli);
+      if (!produk || !bulan || !hb) continue;
+      const key = produk + '|' + bulan;
+      let g = map.get(key);
+      if (!g){ g = {produk, bulan, prices:new Set(), latest:null}; map.set(key, g); }
+      g.prices.add(hb);
+      if (!g.latest || (r._ts||0) >= (g.latest._ts||0)) g.latest = {price:hb, _ts:r._ts||0};
+    }
+    return map;
+  }
+
+  function detectHargaBeliConflicts(oldMap, newMap){
+    const conflicts = [];
+    for (const [key, ng] of newMap){
+      const og = oldMap.get(key);
+      if (!og) continue;
+      const oldPrices = [...og.prices].sort((a,b)=>a-b);
+      const newPrices = [...ng.prices].sort((a,b)=>a-b);
+      const same = oldPrices.length === newPrices.length && oldPrices.every((v,i)=>v===newPrices[i]);
+      if (!same) conflicts.push({produk: og.produk, bulan: og.bulan, oldPrices, newPrices, htmlPrice: og.latest.price});
+    }
+    // Urutkan supaya rapi: per produk, lalu per bulan
+    conflicts.sort((a,b) => a.produk.localeCompare(b.produk) || String(a.bulan).localeCompare(String(b.bulan)));
+    return conflicts;
+  }
+
+  let _hbDiffResolver = null, _hbDiffConflicts = [];
+  function renderHbDiffModal(conflicts){
+    const wrap = document.getElementById('hbDiffRows');
+    wrap.innerHTML = conflicts.map((c, i) => {
+      const oldTxt = c.oldPrices.map(rp).join(', ');
+      const newTxt = c.newPrices.map(rp).join(', ');
+      return '<div class="hbdiff-row" data-idx="'+i+'">'
+        + '<div class="hbdiff-produk">'+ (c.produk||'') +'</div>'
+        + '<div class="hbdiff-bulan">'+ monthLabel(c.bulan) +'</div>'
+        + '<div class="hbdiff-price-old">'+ oldTxt +'</div>'
+        + '<div class="hbdiff-price-new">'+ newTxt +'</div>'
+        + '<div class="hbdiff-choice">'
+          + '<label class="active-html"><input type="radio" name="hbdc'+i+'" value="html" checked onchange="hbDiffRadioChange(this)"> Samakan HTML</label>'
+          + '<label><input type="radio" name="hbdc'+i+'" value="excel" onchange="hbDiffRadioChange(this)"> Tetap Excel</label>'
+        + '</div>'
+        + '</div>';
+    }).join('');
+  }
+
+  function hbDiffRadioChange(input){
+    const row = input.closest('.hbdiff-row');
+    row.querySelectorAll('.hbdiff-choice label').forEach(l => l.classList.remove('active-html','active-excel'));
+    input.closest('label').classList.add(input.value === 'html' ? 'active-html' : 'active-excel');
+  }
+
+  function hbDiffSetAll(choice){
+    document.querySelectorAll('#hbDiffRows .hbdiff-row').forEach(row => {
+      const input = row.querySelector('input[value="'+choice+'"]');
+      if (input){ input.checked = true; hbDiffRadioChange(input); }
+    });
+  }
+
+  function hbDiffCancel(){
+    document.getElementById('hbDiffOverlay').classList.remove('show');
+    if (_hbDiffResolver){ const r = _hbDiffResolver; _hbDiffResolver = null; r(null); }
+  }
+
+  function hbDiffConfirm(){
+    const decisions = [];
+    document.querySelectorAll('#hbDiffRows .hbdiff-row').forEach(row => {
+      const idx = +row.dataset.idx;
+      const checked = row.querySelector('input:checked');
+      decisions[idx] = checked ? checked.value : 'excel';
+    });
+    document.getElementById('hbDiffOverlay').classList.remove('show');
+    if (_hbDiffResolver){ const r = _hbDiffResolver; _hbDiffResolver = null; r(decisions); }
+  }
+
+  function showHbDiffModal(conflicts){
+    _hbDiffConflicts = conflicts;
+    renderHbDiffModal(conflicts);
+    document.getElementById('hbDiffOverlay').classList.add('show');
+    return new Promise(resolve => { _hbDiffResolver = resolve; });
+  }
+
+  /* Bandingkan Harga Beli lama (sudah tersimpan / di-set manual) vs baru (dari file Excel yang baru diupload),
+     untuk bulan-bulan yang akan ditimpa. Jika beda, tampilkan modal peringatan dan tunggu keputusan user.
+     Return true = lanjutkan import, false = user membatalkan import.
+     Jika user pilih "Samakan HTML" untuk suatu produk, SEMUA baris produk itu di file Excel yang baru diupload
+     akan diubah hargaBeli-nya mengikuti harga HTML (harga yang berlaku paling akhir/terbaru). */
+  async function resolveHargaBeliConflicts(incomingRows, monthList){
+    try {
+      const oldRows = await getOldRowsForMonths(monthList);
+      if (!oldRows.length) return true;
+      const oldMap = buildHargaBeliGroups(oldRows);
+      const newMap = buildHargaBeliGroups(incomingRows);
+      const conflicts = detectHargaBeliConflicts(oldMap, newMap);
+      if (!conflicts.length) return true;
+      hideBusy();
+      const decisions = await showHbDiffModal(conflicts);
+      if (!decisions) return false; // user membatalkan import
+      // "Samakan HTML" berlaku untuk SEMUA baris produk tsb di seluruh file Excel yang baru diupload (bukan cuma bulan yang konflik)
+      const produkOverride = new Map(); // PRODUK -> harga HTML
+      conflicts.forEach((c, i) => {
+        if (decisions[i] === 'html') produkOverride.set(c.produk, c.htmlPrice);
+      });
+      if (produkOverride.size){
+        for (const r of incomingRows){
+          const key = U(r.produk);
+          if (produkOverride.has(key)) r.hargaBeli = produkOverride.get(key);
+        }
+      }
+      showBusy('Menyimpan data...');
+      return true;
+    } catch(e){
+      console.warn('resolveHargaBeliConflicts gagal, lanjut tanpa cek', e);
+      return true; // jangan blok import kalau deteksi gagal
+    }
+  }
+
   /* Hapus data lama hanya untuk bulan yang ada di file baru, lalu sisipkan baris baru. */
   async function commitIncomingTx(chunkRows, monthList){
     const months = (monthList || []).filter(Boolean);
@@ -1415,6 +1605,8 @@ self.onmessage = function(e){
       // Jangan hapus semua: hanya ganti bulan yang ada di file baru
       const monthList = [...months];
       try {
+        const lanjut = await resolveHargaBeliConflicts(out, monthList);
+        if (!lanjut){ setStatus('Import dibatalkan.'); hideBusy(); return; }
         await commitIncomingTx(out, monthList);
         const merged = await mergeMetaFromIncoming({products:[...products], sales:[...sales], months:monthList});
         populateFiltersFromMeta(merged);
@@ -1471,6 +1663,8 @@ self.onmessage = function(e){
       _pendingChunks = [];
       _inFlightWorker = false;
       try {
+        const lanjut = await resolveHargaBeliConflicts(incoming, monthList);
+        if (!lanjut){ setStatus('Import dibatalkan.'); hideBusy(); return; }
         await commitIncomingTx(incoming, monthList);
         const merged = await mergeMetaFromIncoming({
           products: m.products || [],
