@@ -109,6 +109,9 @@ button:disabled{opacity:.5;cursor:not-allowed}
 .vfoot{width:100%;min-width:1100px;font-size:12px;border-collapse:collapse;table-layout:fixed}
 table{border-collapse:collapse;width:100%;min-width:1100px;font-size:12px}
 th{background:#1f4e78;color:#fff;position:sticky;top:0;padding:8px;border:1px solid #b8c5d4}
+.s9table th.s9-h1{height:36px;box-sizing:border-box;z-index:4}
+.s9table th.s9-h0{z-index:4}
+.s9table th.s9-h2{position:sticky;top:36px;z-index:3}
 td{padding:7px;border:1px solid #d6dde6;white-space:nowrap}
 td.num{text-align:right}
 tfoot td{background:#ffe699;font-weight:bold}
@@ -2101,12 +2104,12 @@ self.onmessage = function(e){
 
       let st = byProd.get(produk);
       if (!st) {
-        st = { qq:0, v:0, h:0, sat:'', bmin:Infinity, bmax:-Infinity, jmin:Infinity, jmax:-Infinity, qBySales:{}, jc:0, jt:0, pc:0, pt:0 };
+        st = { qq:0, v:0, h:0, sat:'', bmin:Infinity, bmax:-Infinity, jmin:Infinity, jmax:-Infinity, qBySales:{}, jc:0, jt:0, pc:0, pt:0, hbLog:[] };
         byProd.set(produk, st);
       }
       st.qq += j; st.v += t; st.h += hLine;
       if (sat && !st.sat) st.sat = sat;
-      if (!isNaN(hb)) { if (hb < st.bmin) st.bmin = hb; if (hb > st.bmax) st.bmax = hb; }
+      if (!isNaN(hb)) { if (hb < st.bmin) st.bmin = hb; if (hb > st.bmax) st.bmax = hb; st.hbLog.push({ts: x._ts || 0, hb}); }
       if (!isNaN(hj)) { if (hj < st.jmin) st.jmin = hj; if (hj > st.jmax) st.jmax = hj; }
       if (SO.includes(salesName)) st.qBySales[salesName] = (st.qBySales[salesName] || 0) + j;
       if (pay === 'CASH'){ st.jc += t; st.pc += rp0 }
@@ -2130,7 +2133,14 @@ self.onmessage = function(e){
       s2.push([p, st.jc, st.jt, st.pt, st.pc, st.jc+st.jt, st.pc+st.pt]);
       s3.push([p, st.qq, st.v, st.h, range(st.jmin,st.jmax), range(st.bmin,st.bmax), pr]);
       s5.push([p, st.qq, st.sat, st.v, st.h, pr, st.v ? (pr/st.v*100) : 0]);
-      s9.push([p, st.sat, st.bmin, st.bmax, st.jmin, st.jmax]);
+      let hbChange = null;
+      if (st.bmin !== st.bmax && st.hbLog.length){
+        const log = st.hbLog.slice().sort((a,b) => a.ts - b.ts);
+        const base = log[0].hb;
+        const changed = log.find(e => e.hb !== base);
+        if (changed) hbChange = { ts: changed.ts, dir: changed.hb > base ? 'naik' : 'turun' };
+      }
+      s9.push([p, st.sat, st.bmin, st.bmax, st.jmin, st.jmax, hbChange]);
     });
     s9.sort((a,b) => String(a[0]).localeCompare(String(b[0]), 'id'));
     const qtyIdx = 1 + SO2.length;
@@ -2327,7 +2337,7 @@ self.onmessage = function(e){
       addReportSheet(wb,'Sales per Produk','Qty Penjualan Per Sales Per Tgl',head,rows,total);
     } else if(tab==='s9'){
       const head=['PRODUK','SATUAN','HARGA BELI TERENDAH','HARGA BELI TERTINGGI','HARGA JUAL TERENDAH','HARGA JUAL TERTINGGI','KET'];
-      const rows=(r.s9||[]).map(x=>[x[0],x[1]||'',x[2],x[3],x[4],x[5],'']);
+      const rows=(r.s9||[]).map(x=>[x[0],x[1]||'',x[2],x[3],x[4],x[5], x[6] ? ((x[6].dir==='naik'?'Naik':'Turun')+' sejak '+fmtTgl(new Date(x[6].ts))) : '']);
       addReportSheet(wb,'Data Harga','Data Harga',head,rows,['','','','','','','']);
     }
     const name='Laporan_'+({s0:'Transaksi',s1:'Produk',s2:'Profit_Pembayaran',s3:'Profit_Produk',s4:'Rekap_Sales',s5:'Margin_Produk',s6:'Faktur',s7:'Sales_per_Produk',s8:'Profit_Faktur',s9:'Data_Harga'}[tab]||'Penjualan')+'.xlsx';
@@ -2726,7 +2736,10 @@ self.onmessage = function(e){
       body = '<tr><td colspan="7" style="text-align:center;padding:28px;color:#64748b">Tidak ada data untuk filter saat ini.</td></tr>';
     } else {
       pageRows.forEach(x => {
-        const [produk, satuan, bmin, bmax, jmin, jmax] = x;
+        const [produk, satuan, bmin, bmax, jmin, jmax, hbChange] = x;
+        const ket = hbChange
+          ? ((hbChange.dir === 'naik' ? 'Naik' : 'Turun') + ' sejak ' + fmtTgl(new Date(hbChange.ts)))
+          : '';
         body += '<tr>' +
           '<td>' + produk + '</td>' +
           '<td>' + (satuan || '') + '</td>' +
@@ -2734,21 +2747,21 @@ self.onmessage = function(e){
           '<td class="num">' + rp(bmax) + '</td>' +
           '<td class="num">' + rp(jmin) + '</td>' +
           '<td class="num">' + rp(jmax) + '</td>' +
-          '<td></td>' +
+          '<td>' + ket + '</td>' +
         '</tr>';
       });
     }
-    const table = '<div class="tablebox"><table><thead>' +
+    const table = '<div class="tablebox"><table class="s9table"><thead>' +
       '<tr>' +
-        '<th rowspan="2">Produk</th>' +
-        '<th rowspan="2">Satuan</th>' +
-        '<th colspan="2">Harga Beli</th>' +
-        '<th colspan="2">Harga Jual</th>' +
-        '<th rowspan="2">Ket</th>' +
+        '<th class="s9-h0" rowspan="2">Produk</th>' +
+        '<th class="s9-h0" rowspan="2">Satuan</th>' +
+        '<th class="s9-h1" colspan="2">Harga Beli</th>' +
+        '<th class="s9-h1" colspan="2">Harga Jual</th>' +
+        '<th class="s9-h0" rowspan="2">Ket</th>' +
       '</tr>' +
       '<tr>' +
-        '<th>Terendah</th><th>Tertinggi</th>' +
-        '<th>Terendah</th><th>Tertinggi</th>' +
+        '<th class="s9-h2">Terendah</th><th class="s9-h2">Tertinggi</th>' +
+        '<th class="s9-h2">Terendah</th><th class="s9-h2">Tertinggi</th>' +
       '</tr>' +
       '</thead><tbody>' + body + '</tbody></table></div>';
     return reportBar('s9','Data Harga') + caption + rekapPagerHtml('s9', list.length) + table;
