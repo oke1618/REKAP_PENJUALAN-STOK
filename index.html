@@ -716,6 +716,7 @@ body.dark .backup-action.warn{background:#422006;color:#fdba74;border-color:#924
       <button onclick="show('s3',this)">Profit Penjualan per Produk</button>
       <button onclick="show('s4',this)">Rekap per Sales</button>
       <button onclick="show('s5',this)">Margin % per Produk</button>
+      <button onclick="show('s9',this)">Data Harga</button>
     </div>
     <div class="toolbar-row">
       <div class="toolbar-left">
@@ -808,6 +809,7 @@ body.dark .backup-action.warn{background:#422006;color:#fdba74;border-color:#924
       <div id="panel_s3" class="view" style="display:none"></div>
       <div id="panel_s4" class="view" style="display:none"></div>
       <div id="panel_s5" class="view" style="display:none"></div>
+      <div id="panel_s9" class="view" style="display:none"></div>
     </div>
   </div>
 </div>
@@ -2121,7 +2123,7 @@ self.onmessage = function(e){
       }
     });
     const faktur = fakturSet.size, SO2 = SO.filter(s => salesQty[s] > 0);
-    const s1 = [], s2 = [], s3 = [], s5 = [];
+    const s1 = [], s2 = [], s3 = [], s5 = [], s9 = [];
     byProd.forEach((st, p) => {
       if (st.bmin === Infinity) { st.bmin = 0; st.bmax = 0; }
       if (st.jmin === Infinity) { st.jmin = 0; st.jmax = 0; }
@@ -2130,7 +2132,9 @@ self.onmessage = function(e){
       s2.push([p, st.jc, st.jt, st.pt, st.pc, st.jc+st.jt, st.pc+st.pt]);
       s3.push([p, st.qq, st.v, st.h, range(st.jmin,st.jmax), range(st.bmin,st.bmax), pr]);
       s5.push([p, st.qq, st.sat, st.v, st.h, pr, st.v ? (pr/st.v*100) : 0]);
+      s9.push([p, st.sat, st.bmin, st.bmax, st.jmin, st.jmax]);
     });
+    s9.sort((a,b) => String(a[0]).localeCompare(String(b[0]), 'id'));
     const qtyIdx = 1 + SO2.length;
     s1.sort((a,b) => b[qtyIdx] - a[qtyIdx]);
     s2.sort((a,b) => b[5] - a[5]);
@@ -2146,9 +2150,9 @@ self.onmessage = function(e){
     });
     s4fitri.sort((a,b) => SO.indexOf(a[0]) - SO.indexOf(b[0]));
     s4rupa.sort((a,b) => SO.indexOf(a[0]) - SO.indexOf(b[0]));
-    R = { s1, s2, s3, s4fitri, s4rupa, s5, qty, sales, hpp, profit, cs, ts, cp, tp, SO2, faktur, fitriQty, fitriSales, rupaQty, rupaSales };
+    R = { s1, s2, s3, s4fitri, s4rupa, s5, s9, qty, sales, hpp, profit, cs, ts, cp, tp, SO2, faktur, fitriQty, fitriSales, rupaQty, rupaSales };
     // reset halaman rekap saat data berubah
-    rekapPage = { s1:0, s2:0, s3:0, s5:0, s6:0, s8:0 };
+    rekapPage = { s1:0, s2:0, s3:0, s5:0, s6:0, s8:0, s9:0 };
   }
 
   // Tanda tangan kombinasi filter yang sedang aktif, dipakai sebagai key cache hasil build().
@@ -2165,7 +2169,7 @@ self.onmessage = function(e){
     if (cached){
       R = cached;
       dataVersion++;               // tetap anggap versi tampilan baru agar tab lain re-render
-      rekapPage = { s1:0, s2:0, s3:0, s5:0, s6:0, s8:0 };
+      rekapPage = { s1:0, s2:0, s3:0, s5:0, s6:0, s8:0, s9:0 };
       return;
     }
     build(data);
@@ -2323,8 +2327,12 @@ self.onmessage = function(e){
       ]);
       const total=['TOTAL','',...SO_S7.map(s=>pivot.grand[s]||0),pivot.grandTotal||0];
       addReportSheet(wb,'Sales per Produk','Qty Penjualan Per Sales Per Tgl',head,rows,total);
+    } else if(tab==='s9'){
+      const head=['PRODUK','SATUAN','HARGA BELI TERENDAH','HARGA BELI TERTINGGI','HARGA JUAL TERENDAH','HARGA JUAL TERTINGGI','KET'];
+      const rows=(r.s9||[]).map(x=>[x[0],x[1]||'',x[2],x[3],x[4],x[5],'']);
+      addReportSheet(wb,'Data Harga','Data Harga',head,rows,['','','','','','','']);
     }
-    const name='Laporan_'+({s0:'Transaksi',s1:'Produk',s2:'Profit_Pembayaran',s3:'Profit_Produk',s4:'Rekap_Sales',s5:'Margin_Produk',s6:'Faktur',s7:'Sales_per_Produk',s8:'Profit_Faktur'}[tab]||'Penjualan')+'.xlsx';
+    const name='Laporan_'+({s0:'Transaksi',s1:'Produk',s2:'Profit_Pembayaran',s3:'Profit_Produk',s4:'Rekap_Sales',s5:'Margin_Produk',s6:'Faktur',s7:'Sales_per_Produk',s8:'Profit_Faktur',s9:'Data_Harga'}[tab]||'Penjualan')+'.xlsx';
     XLSX.writeFile(wb,name);
   }
 
@@ -2500,7 +2508,7 @@ self.onmessage = function(e){
   }
 
   /* Paginasi tab rekap (siap data setahun / banyak produk) */
-  let rekapPage = { s1:0, s2:0, s3:0, s5:0, s6:0, s8:0 };
+  let rekapPage = { s1:0, s2:0, s3:0, s5:0, s6:0, s8:0, s9:0 };
   const REKAP_PAGE_SIZE = 60;
   function rekapPagerHtml(tab, total){
     const pages = Math.max(1, Math.ceil(total / REKAP_PAGE_SIZE));
@@ -2694,14 +2702,58 @@ self.onmessage = function(e){
       const avgM = totNominal ? (totProfit/totNominal*100) : 0;
       return reportBar('s8','Profit per Faktur') + rekapPagerHtml('s8', groups.length) +
         tbl(h, d, ['TOTAL','','','','','', rp(totNominal), rp(totProfit), (Math.round(avgM*100)/100).toLocaleString('id-ID') + ' %']);
-    } else {
+    } else if (t === 's5'){
       const h = ['NO','PRODUK','QTY','SATUAN','TOTAL PENJUALAN','TOTAL HPP','PROFIT','MARGIN %'];
       const pageRows = sliceRekap('s5', R.s5 || []);
       const base = (rekapPage.s5 || 0) * REKAP_PAGE_SIZE;
       const d = pageRows.map((x,i) => [base+i+1, x[0], x[1], x[2], rp(x[3]), rp(x[4]), rp(x[5]), (Math.round(x[6]*100)/100).toLocaleString('id-ID') + ' %']);
       const avgM = R.sales ? (R.profit/R.sales*100) : 0;
       return reportBar('s5','Margin % per Produk') + rekapPagerHtml('s5', (R.s5||[]).length) + tbl(h, d, ['TOTAL', '', R.qty, '', rp(R.sales), rp(R.hpp), rp(R.profit), (Math.round(avgM*100)/100).toLocaleString('id-ID') + ' %']);
+    } else if (t === 's9'){
+      return renderS9();
     }
+  }
+
+  /* ------------- Data Harga: harga terendah/tertinggi per produk (apa adanya, tanpa rata-rata) ------------- */
+  function monthFilterLabel(){
+    const fm = document.getElementById('filterMonth');
+    return fm && fm.value ? (fm.options[fm.selectedIndex]?.text || fm.value) : 'Semua bulan';
+  }
+  function renderS9(){
+    const list = R.s9 || [];
+    const pageRows = sliceRekap('s9', list);
+    const caption = '<div style="font-weight:700;color:#1f4e78;margin-bottom:8px">' + monthFilterLabel() + ' ( filter bulan )</div>';
+    let body = '';
+    if (!pageRows.length){
+      body = '<tr><td colspan="7" style="text-align:center;padding:28px;color:#64748b">Tidak ada data untuk filter saat ini.</td></tr>';
+    } else {
+      pageRows.forEach(x => {
+        const [produk, satuan, bmin, bmax, jmin, jmax] = x;
+        body += '<tr>' +
+          '<td>' + produk + '</td>' +
+          '<td>' + (satuan || '') + '</td>' +
+          '<td class="num">' + rp(bmin) + '</td>' +
+          '<td class="num">' + rp(bmax) + '</td>' +
+          '<td class="num">' + rp(jmin) + '</td>' +
+          '<td class="num">' + rp(jmax) + '</td>' +
+          '<td></td>' +
+        '</tr>';
+      });
+    }
+    const table = '<div class="tablebox"><table><thead>' +
+      '<tr>' +
+        '<th rowspan="2">Produk</th>' +
+        '<th rowspan="2">Satuan</th>' +
+        '<th colspan="2">Harga Beli</th>' +
+        '<th colspan="2">Harga Jual</th>' +
+        '<th rowspan="2">Ket</th>' +
+      '</tr>' +
+      '<tr>' +
+        '<th>Terendah</th><th>Tertinggi</th>' +
+        '<th>Terendah</th><th>Tertinggi</th>' +
+      '</tr>' +
+      '</thead><tbody>' + body + '</tbody></table></div>';
+    return reportBar('s9','Data Harga') + caption + rekapPagerHtml('s9', list.length) + table;
   }
 
   /* ------------- Rekap per Faktur (baris detail + nominal/profit per faktur) ------------- */
