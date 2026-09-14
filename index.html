@@ -720,6 +720,7 @@ body.dark .backup-action.warn{background:#422006;color:#fdba74;border-color:#924
       <button onclick="show('s4',this)">Rekap per Sales</button>
       <button onclick="show('s5',this)">Margin % per Produk</button>
       <button onclick="show('s9',this)">Data Harga</button>
+      <button onclick="show('s10',this)">Data Bulanan</button>
     </div>
     <div class="toolbar-row">
       <div class="toolbar-left">
@@ -813,6 +814,7 @@ body.dark .backup-action.warn{background:#422006;color:#fdba74;border-color:#924
       <div id="panel_s4" class="view" style="display:none"></div>
       <div id="panel_s5" class="view" style="display:none"></div>
       <div id="panel_s9" class="view" style="display:none"></div>
+      <div id="panel_s10" class="view" style="display:none"></div>
     </div>
   </div>
 </div>
@@ -2339,8 +2341,27 @@ self.onmessage = function(e){
       const head=['PRODUK','SATUAN','HARGA BELI TERENDAH','HARGA BELI TERTINGGI','HARGA JUAL TERENDAH','HARGA JUAL TERTINGGI','KET'];
       const rows=(r.s9||[]).map(x=>[x[0],x[1]||'',x[2],x[3],x[4],x[5], x[6] ? ((x[6].dir==='naik'?'Naik':'Turun')+' sejak '+fmtTgl(new Date(x[6].ts))) : '']);
       addReportSheet(wb,'Data Harga','Data Harga',head,rows,['','','','','','','']);
+    } else if(tab==='s10'){
+      const byMonth = new Map();
+      for(let i=0;i<filteredRows.length;i++){
+        const x=getUiRow(i); if(!x) continue;
+        const mk=monthKey(x.Tanggal||x.tanggal); if(!mk) continue;
+        let m=byMonth.get(mk);
+        if(!m){ m={fitri:{q:0,n:0,p:0},rupa:{q:0,n:0,p:0}}; byMonth.set(mk,m); }
+        const j=N(x.Jumlah), t=N(x.Total), pr=t-j*N(x['Harga Beli']);
+        const b=isFitriProduct(x.Produk)?m.fitri:m.rupa;
+        b.q+=j; b.n+=t; b.p+=pr;
+      }
+      const months=[...byMonth.keys()].sort();
+      const head=['Bulan','Qty Fitri','Nominal Fitri','Profit Fitri','Qty Rupa Rupa','Nominal Rupa Rupa','Profit Rupa Rupa','Total Nominal Penjualan','Total Profit'];
+      const rows=months.map(mk=>{
+        const m=byMonth.get(mk); const f=m.fitri, r=m.rupa;
+        return [monthLabelShort(mk), f.q, f.n, f.p, r.q, r.n, r.p, f.n+r.n, f.p+r.p];
+      });
+      const tot=rows.reduce((a,x)=>[a[0]+x[1],a[1]+x[2],a[2]+x[3],a[3]+x[4],a[4]+x[5],a[5]+x[6],a[6]+x[7],a[7]+x[8]],[0,0,0,0,0,0,0,0]);
+      addReportSheet(wb,'Data Bulanan','Rekap Data Bulanan',head,rows,['TOTAL',...tot]);
     }
-    const name='Laporan_'+({s0:'Transaksi',s1:'Produk',s2:'Profit_Pembayaran',s3:'Profit_Produk',s4:'Rekap_Sales',s5:'Margin_Produk',s6:'Faktur',s7:'Sales_per_Produk',s8:'Profit_Faktur',s9:'Data_Harga'}[tab]||'Penjualan')+'.xlsx';
+    const name='Laporan_'+({s0:'Transaksi',s1:'Produk',s2:'Profit_Pembayaran',s3:'Profit_Produk',s4:'Rekap_Sales',s5:'Margin_Produk',s6:'Faktur',s7:'Sales_per_Produk',s8:'Profit_Faktur',s9:'Data_Harga',s10:'Data_Bulanan'}[tab]||'Penjualan')+'.xlsx';
     XLSX.writeFile(wb,name);
   }
 
@@ -2719,6 +2740,8 @@ self.onmessage = function(e){
       return reportBar('s5','Margin % per Produk') + rekapPagerHtml('s5', (R.s5||[]).length) + tbl(h, d, ['TOTAL', '', R.qty, '', rp(R.sales), rp(R.hpp), rp(R.profit), (Math.round(avgM*100)/100).toLocaleString('id-ID') + ' %']);
     } else if (t === 's9'){
       return renderS9();
+    } else if (t === 's10'){
+      return renderDataBulanan();
     }
   }
 
@@ -2765,6 +2788,94 @@ self.onmessage = function(e){
       '</tr>' +
       '</thead><tbody>' + body + '</tbody></table></div>';
     return reportBar('s9','Data Harga') + caption + rekapPagerHtml('s9', list.length) + table;
+  }
+
+  /* ------------- Data Bulanan: rekap per bulan Fitri vs Rupa Rupa ------------- */
+  function monthLabelShort(key){
+    if (!key) return '';
+    const [y, m] = key.split('-').map(Number);
+    return new Date(y, m - 1, 1).toLocaleDateString('id-ID', { month: 'long' }).toLowerCase();
+  }
+  function renderDataBulanan(){
+    const byMonth = new Map();
+    const n = filteredRows.length;
+    for (let i = 0; i < n; i++){
+      const x = getUiRow(i);
+      if (!x) continue;
+      const mk = monthKey(x.Tanggal || x.tanggal);
+      if (!mk) continue;
+      let m = byMonth.get(mk);
+      if (!m){
+        m = { fitri: { q:0, n:0, p:0 }, rupa: { q:0, n:0, p:0 } };
+        byMonth.set(mk, m);
+      }
+      const j = N(x.Jumlah);
+      const t = N(x.Total);
+      const pr = t - j * N(x['Harga Beli']);
+      const bucket = isFitriProduct(x.Produk) ? m.fitri : m.rupa;
+      bucket.q += j;
+      bucket.n += t;
+      bucket.p += pr;
+    }
+    const months = [...byMonth.keys()].sort();
+    let totFitriQ = 0, totFitriN = 0, totFitriP = 0;
+    let totRupaQ = 0, totRupaN = 0, totRupaP = 0;
+    let body = '';
+    if (!months.length){
+      body = '<tr><td colspan="9" style="text-align:center;padding:28px;color:#64748b">Tidak ada data untuk filter saat ini.</td></tr>';
+    } else {
+      months.forEach(mk => {
+        const m = byMonth.get(mk);
+        const f = m.fitri, r = m.rupa;
+        totFitriQ += f.q; totFitriN += f.n; totFitriP += f.p;
+        totRupaQ += r.q; totRupaN += r.n; totRupaP += r.p;
+        const totN = f.n + r.n;
+        const totP = f.p + r.p;
+        body += '<tr>' +
+          '<td>' + monthLabelShort(mk) + '</td>' +
+          '<td class="num">' + (f.q ? f.q.toLocaleString('id-ID') : '') + '</td>' +
+          '<td class="num">' + (f.n ? rp(f.n) : '') + '</td>' +
+          '<td class="num">' + (f.p ? rp(f.p) : '') + '</td>' +
+          '<td class="num">' + (r.q ? r.q.toLocaleString('id-ID') : '') + '</td>' +
+          '<td class="num">' + (r.n ? rp(r.n) : '') + '</td>' +
+          '<td class="num">' + (r.p ? rp(r.p) : '') + '</td>' +
+          '<td class="num">' + (totN ? rp(totN) : '') + '</td>' +
+          '<td class="num">' + (totP ? rp(totP) : '') + '</td>' +
+        '</tr>';
+      });
+    }
+    const totNAll = totFitriN + totRupaN;
+    const totPAll = totFitriP + totRupaP;
+    const foot = months.length
+      ? '<tr>' +
+          '<td>TOTAL</td>' +
+          '<td class="num">' + totFitriQ.toLocaleString('id-ID') + '</td>' +
+          '<td class="num">' + rp(totFitriN) + '</td>' +
+          '<td class="num">' + rp(totFitriP) + '</td>' +
+          '<td class="num">' + totRupaQ.toLocaleString('id-ID') + '</td>' +
+          '<td class="num">' + rp(totRupaN) + '</td>' +
+          '<td class="num">' + rp(totRupaP) + '</td>' +
+          '<td class="num">' + rp(totNAll) + '</td>' +
+          '<td class="num">' + rp(totPAll) + '</td>' +
+        '</tr>'
+      : '';
+    const caption = '<div style="font-weight:700;color:#1f4e78;margin-bottom:8px">Rekap Data Bulanan (mengikuti filter aktif)</div>';
+    const table = '<div class="tablebox"><table><thead>' +
+      '<tr>' +
+        '<th rowspan="2">Bulan</th>' +
+        '<th colspan="3">Produk Fitri</th>' +
+        '<th colspan="3">Produk Rupa rupa</th>' +
+        '<th rowspan="2">Total<br>Nominal Penjualan</th>' +
+        '<th rowspan="2">Total<br>Profit</th>' +
+      '</tr>' +
+      '<tr>' +
+        '<th>Qty</th><th>Nominal Penjualan</th><th>Profit</th>' +
+        '<th>Qty</th><th>Nominal Penjualan</th><th>Profit</th>' +
+      '</tr>' +
+      '</thead><tbody>' + body + '</tbody>' +
+      (foot ? '<tfoot>' + foot + '</tfoot>' : '') +
+      '</table></div>';
+    return reportBar('s10','Data Bulanan') + caption + table;
   }
 
   /* ------------- Rekap per Faktur (baris detail + nominal/profit per faktur) ------------- */
