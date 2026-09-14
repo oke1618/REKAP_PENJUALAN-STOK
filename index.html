@@ -112,6 +112,13 @@ th{background:#1f4e78;color:#fff;position:sticky;top:0;padding:8px;border:1px so
 .s9table th.s9-h1{height:36px;box-sizing:border-box;z-index:4}
 .s9table th.s9-h0{z-index:4}
 .s9table th.s9-h2{position:sticky;top:36px;z-index:3}
+/* Data Bulanan: baris header ke-2 lebih muda */
+.s10table th.s10-h0{background:#1f4e78;color:#fff;z-index:4}
+.s10table th.s10-h1{background:#1f4e78;color:#fff;height:36px;box-sizing:border-box;z-index:4}
+.s10table th.s10-h2{background:#3d6fa0;color:#fff;position:sticky;top:36px;z-index:3}
+body.dark .s10table th.s10-h0,
+body.dark .s10table th.s10-h1{background:#1e3a5f;color:#fff}
+body.dark .s10table th.s10-h2{background:#2d4a6f;color:#e2e8f0}
 td{padding:7px;border:1px solid #d6dde6;white-space:nowrap}
 td.num{text-align:right}
 tfoot td{background:#ffe699;font-weight:bold}
@@ -2860,17 +2867,17 @@ self.onmessage = function(e){
         '</tr>'
       : '';
     const caption = '<div style="font-weight:700;color:#1f4e78;margin-bottom:8px">Rekap Data Bulanan (mengikuti filter aktif)</div>';
-    const table = '<div class="tablebox"><table><thead>' +
+    const table = '<div class="tablebox"><table class="s10table"><thead>' +
       '<tr>' +
-        '<th rowspan="2">Bulan</th>' +
-        '<th colspan="3">Produk Fitri</th>' +
-        '<th colspan="3">Produk Rupa rupa</th>' +
-        '<th rowspan="2">Total<br>Nominal Penjualan</th>' +
-        '<th rowspan="2">Total<br>Profit</th>' +
+        '<th class="s10-h0" rowspan="2">Bulan</th>' +
+        '<th class="s10-h1" colspan="3">Produk Fitri</th>' +
+        '<th class="s10-h1" colspan="3">Produk Rupa rupa</th>' +
+        '<th class="s10-h0" rowspan="2">Total<br>Nominal Penjualan</th>' +
+        '<th class="s10-h0" rowspan="2">Total<br>Profit</th>' +
       '</tr>' +
       '<tr>' +
-        '<th>Qty</th><th>Nominal Penjualan</th><th>Profit</th>' +
-        '<th>Qty</th><th>Nominal Penjualan</th><th>Profit</th>' +
+        '<th class="s10-h2">Qty</th><th class="s10-h2">Nominal Penjualan</th><th class="s10-h2">Profit</th>' +
+        '<th class="s10-h2">Qty</th><th class="s10-h2">Nominal Penjualan</th><th class="s10-h2">Profit</th>' +
       '</tr>' +
       '</thead><tbody>' + body + '</tbody>' +
       (foot ? '<tfoot>' + foot + '</tfoot>' : '') +
