@@ -721,7 +721,7 @@ body.dark .backup-action.warn{background:#422006;color:#fdba74;border-color:#924
     <div class="toolbar-row">
       <div class="toolbar-left">
       <div class="quick-search-wrap">
-        <input type="search" id="quickSearch" placeholder="🔍 Cari cepat: produk, faktur, customer, sales..." oninput="onQuickSearchInput()">
+        <input type="search" id="quickSearch" placeholder="🔍 Cari produk..." oninput="onQuickSearchInput()">
       </div>
       <div class="month-quick">
         <label for="filterMonth">Bulan</label>
@@ -1047,14 +1047,12 @@ body.dark .backup-action.warn{background:#422006;color:#fdba74;border-color:#924
     clearTimeout(_qsTimer);
     _qsTimer = setTimeout(() => { applyFilters(); }, 300);
   }
-  // Cocokkan teks pencarian cepat terhadap field-field penting satu baris transaksi.
+  // Pencarian cepat hanya mencocokkan NAMA PRODUK (bukan faktur/sales/customer/alamat/dsb),
+  // supaya hasilnya sesuai ekspektasi: ketik "ns" → hanya produk yang namanya mengandung "ns".
   function matchQuickSearch(r, qLower){
     if (!qLower) return true;
-    const hay = [
-      r.produk, r.faktur, r['No. Faktur'], r.sales, r.customer, r.Customer,
-      r.kdCustomer, r['Kd Customer'], r.pembayaran, r.Pembayaran, r.alamat
-    ].map(v => String(v ?? '').toLowerCase()).join(' | ');
-    return hay.includes(qLower);
+    const produk = String(r.produk ?? r.Produk ?? '').toLowerCase();
+    return produk.includes(qLower);
   }
   let viewCache = {};
   let buildCache = new Map();      // signature filter -> hasil agregasi R (cache agar tidak dihitung ulang saat filter yang sama dipakai lagi)
