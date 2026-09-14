@@ -29,6 +29,9 @@ button:disabled{opacity:.5;cursor:not-allowed}
 .toolbar-row{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:12px}
 .toolbar-left{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .month-quick{display:flex;align-items:center;gap:6px;margin-left:0}
+.quick-search-wrap{display:flex;align-items:center}
+.quick-search-wrap input{width:240px;max-width:56vw;padding:6px 10px;border:1px solid #cbd5e1;border-radius:7px;font-size:12px;background:#fff;color:#172033}
+.quick-search-wrap input:focus{outline:none;border-color:#1f4e78;box-shadow:0 0 0 2px rgba(31,78,120,.15)}
 .s7-date-quick{display:flex;align-items:center;gap:6px}
 .faktur-mode-toggle{display:none;align-items:center;gap:4px;margin-left:4px}
 .faktur-mode-toggle .fm-btn{
@@ -95,6 +98,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
 #page-penjualan .month-quick{gap:5px}
 #page-penjualan .month-quick label{font-size:10px}
 #page-penjualan .month-quick select{min-width:138px;padding:5px 10px;border-radius:6px;font-size:11px}
+#page-penjualan .quick-search-wrap input{padding:5px 10px;border-radius:6px;font-size:11px;width:200px}
 #page-penjualan .month-quick .filter-btn{width:28px;height:28px;font-size:14px;border-radius:6px}
 #page-penjualan .col-picker-btn{padding:5px 10px;font-size:11px;border-radius:6px}
 #page-penjualan #toolbarSaveExcel{padding:5px 10px!important;border-radius:6px!important;font-size:11px!important}
@@ -715,6 +719,9 @@ body.dark .backup-action.warn{background:#422006;color:#fdba74;border-color:#924
     </div>
     <div class="toolbar-row">
       <div class="toolbar-left">
+      <div class="quick-search-wrap">
+        <input type="search" id="quickSearch" placeholder="🔍 Cari cepat: produk, faktur, customer, sales..." oninput="onQuickSearchInput()">
+      </div>
       <div class="month-quick">
         <label for="filterMonth">Bulan</label>
         <select id="filterMonth" onchange="applyFilters()"><option value="">Semua bulan</option></select>
@@ -1032,7 +1039,21 @@ body.dark .backup-action.warn{background:#422006;color:#fdba74;border-color:#924
   let filteredRows = [];               // current slice (post-filter, pre-materialise)
   let materialisedRows = [];           // UI-form rows (key 'No. Faktur', 'Produk', ...)
   let R = {};                          // aggregates for KPIs / per-product tabs
-  let filters = {month:'',sales:'',product:'',payment:'',dateFrom:'',dateTo:'',kdCustomer:''};
+  let filters = {month:'',sales:'',product:'',payment:'',dateFrom:'',dateTo:'',kdCustomer:'',q:''};
+  let _qsTimer = null;
+  function onQuickSearchInput(){
+    clearTimeout(_qsTimer);
+    _qsTimer = setTimeout(() => { applyFilters(); }, 300);
+  }
+  // Cocokkan teks pencarian cepat terhadap field-field penting satu baris transaksi.
+  function matchQuickSearch(r, qLower){
+    if (!qLower) return true;
+    const hay = [
+      r.produk, r.faktur, r['No. Faktur'], r.sales, r.customer, r.Customer,
+      r.kdCustomer, r['Kd Customer'], r.pembayaran, r.Pembayaran, r.alamat
+    ].map(v => String(v ?? '').toLowerCase()).join(' | ');
+    return hay.includes(qLower);
+  }
   let viewCache = {};
   let buildCache = new Map();      // signature filter -> hasil agregasi R (cache agar tidak dihitung ulang saat filter yang sama dipakai lagi)
   const BUILD_CACHE_MAX = 20;      // batasi jumlah entri cache
@@ -1581,6 +1602,7 @@ self.onmessage = function(e){
     const fromTs = dateStrToStartTs(filters.dateFrom);
     const toTs = dateStrToEndTs(filters.dateTo);
     const kdQ = (filters.kdCustomer || '').trim();
+    const qLower = (filters.q || '').trim().toLowerCase();
     if (!useIDB){
       let out = rows;
       if (filters.month)   out = out.filter(x => x.bulan === filters.month);
@@ -1590,6 +1612,7 @@ self.onmessage = function(e){
       if (filters.payment) out = out.filter(x => x.pembayaran === filters.payment);
       if (fromTs != null || toTs != null) out = out.filter(x => rowInDateRange(x, fromTs, toTs));
       if (kdQ) out = out.filter(x => matchKdCustomer(x.kdCustomer ?? x['Kd Customer'], kdQ));
+      if (qLower) out = out.filter(x => matchQuickSearch(x, qLower));
       return out;
     }
     // Dexie path — pakai indeks komposit bila memungkinkan
@@ -1617,6 +1640,7 @@ self.onmessage = function(e){
       if (filters.product === 'RUPA_RUPA' &&  isFitriProduct(r.produk)) return false;
       if (!rowInDateRange(r, fromTs, toTs)) return false;
       if (kdQ && !matchKdCustomer(r.kdCustomer, kdQ)) return false;
+      if (qLower && !matchQuickSearch(r, qLower)) return false;
       return true;
     });
     const out = await coll.toArray();
@@ -1658,7 +1682,8 @@ self.onmessage = function(e){
       payment:     document.getElementById('filterPayment').value,
       dateFrom:    document.getElementById('filterDateFrom')?.value || '',
       dateTo:      document.getElementById('filterDateTo')?.value || '',
-      kdCustomer:  (document.getElementById('filterKdCustomer')?.value || '').trim()
+      kdCustomer:  (document.getElementById('filterKdCustomer')?.value || '').trim(),
+      q:           (document.getElementById('quickSearch')?.value || '').trim()
     };
     // jika dari > sampai, tukar supaya tetap valid
     if (filters.dateFrom && filters.dateTo && filters.dateFrom > filters.dateTo) {
@@ -1694,7 +1719,8 @@ self.onmessage = function(e){
       filters.sales   || '',
       filters.product === 'FITRI' ? 'Fitri' : filters.product === 'RUPA_RUPA' ? 'Rupa Rupa' : '',
       filters.payment || '',
-      filters.kdCustomer ? ('Kd: ' + filters.kdCustomer) : ''
+      filters.kdCustomer ? ('Kd: ' + filters.kdCustomer) : '',
+      filters.q ? ('Cari: ' + filters.q) : ''
     ].filter(Boolean);
     const bigWarn = filteredRows.length > LARGE_RESULT_WARN
       ? ' ⚠ Data besar — pertimbangkan mempersempit filter (bulan/sales/tanggal) agar tabel Transaksi lebih ringan.'
@@ -1706,13 +1732,15 @@ self.onmessage = function(e){
   }
 
   async function resetFilters(){
-    filters = {month:'',sales:'',product:'',payment:'',dateFrom:'',dateTo:'',kdCustomer:''};
+    filters = {month:'',sales:'',product:'',payment:'',dateFrom:'',dateTo:'',kdCustomer:'',q:''};
     const df = document.getElementById('filterDateFrom');
     const dt = document.getElementById('filterDateTo');
     const kd = document.getElementById('filterKdCustomer');
+    const qs = document.getElementById('quickSearch');
     if (df) df.value = '';
     if (dt) dt.value = '';
     if (kd) kd.value = '';
+    if (qs) qs.value = '';
     if (useIDB) { try { await db.meta.put({key:'filters', value:filters}); } catch(e){} }
     await populateFiltersDOM(); // akan mengisi bulan terkini otomatis
     await applyFilters();
@@ -1867,9 +1895,11 @@ self.onmessage = function(e){
     const df = document.getElementById('filterDateFrom');
     const dt = document.getElementById('filterDateTo');
     const kd = document.getElementById('filterKdCustomer');
+    const qs = document.getElementById('quickSearch');
     if (df) df.value = filters.dateFrom || '';
     if (dt) dt.value = filters.dateTo || '';
     if (kd) kd.value = filters.kdCustomer || '';
+    if (qs) qs.value = filters.q || '';
     const dm = document.getElementById('deleteMonth');
     if (dm) dm.innerHTML = '<option value="">Pilih bulan...</option>' +
       months.map(m => '<option value="'+m+'">'+monthLabel(m)+'</option>').join('');
@@ -1901,6 +1931,7 @@ self.onmessage = function(e){
     if (filters.product) parts.push(filters.product === 'FITRI' ? 'Fitri' : 'Rupa Rupa');
     if (filters.payment) parts.push(filters.payment);
     if (filters.kdCustomer) parts.push('Kd: ' + filters.kdCustomer);
+    if (filters.q) parts.push('Cari: ' + filters.q);
     document.getElementById('filterInfo').textContent = parts.length ? 'Aktif: ' + parts.join(' • ') : 'Filter belum diterapkan.';
   }
 
@@ -3152,7 +3183,7 @@ self.onmessage = function(e){
       if (!total) return;
       const metaFilters = await db.meta.get('filters');
       if (metaFilters && metaFilters.value) {
-        filters = Object.assign({month:'',sales:'',product:'',payment:'',dateFrom:'',dateTo:'',kdCustomer:''}, metaFilters.value);
+        filters = Object.assign({month:'',sales:'',product:'',payment:'',dateFrom:'',dateTo:'',kdCustomer:'',q:''}, metaFilters.value);
       }
       const monthsMeta = ((await db.meta.get('months')) || {}).value || [];
       // Saat pertama dibuka / bulan kosong: pakai bulan terkini
