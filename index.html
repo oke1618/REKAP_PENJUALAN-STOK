@@ -2431,32 +2431,13 @@ self.onmessage = function(e){
   }
 
   function reportMetaRows(title){
-    const fm = document.getElementById('filterMonth');
-    const fs = document.getElementById('filterSales');
-    const fp = document.getElementById('filterProduct');
-    const fpay = document.getElementById('filterPayment');
-    const fk = document.getElementById('filterKdCustomer');
-    const from = document.getElementById('filterDateFrom');
-    const to = document.getElementById('filterDateTo');
-    const monthText = fm && fm.value ? (fm.options[fm.selectedIndex]?.text || fm.value) : 'Semua bulan';
-    const salesText = fs && fs.value ? (fs.options[fs.selectedIndex]?.text || fs.value) : 'Semua sales';
-    const prodText = fp && fp.value ? (fp.options[fp.selectedIndex]?.text || fp.value) : 'Semua produk';
-    const payText = fpay && fpay.value ? (fpay.options[fpay.selectedIndex]?.text || fpay.value) : 'Semua pembayaran';
-    const dateText = (from?.value || to?.value) ? ((from?.value || 'awal') + ' s/d ' + (to?.value || 'akhir')) : 'Semua tanggal';
-    const kdText = fk?.value?.trim() || 'Semua customer';
-    return [
-      ['LAPORAN', title],
-      ['BULAN', monthText],
-      ['SALES', salesText],
-      ['PRODUK', prodText],
-      ['PEMBAYARAN', payText],
-      ['TANGGAL', dateText],
-      ['KODE CUSTOMER', kdText],
-      []
-    ];
+    // Blok metadata (LAPORAN/BULAN/SALES/dst) dihilangkan agar sheet Excel
+    // langsung dimulai dari baris header tabel di A1 (tanpa baris kosong di atas).
+    return [];
   }
 
   function styleReportSheet(ws, data, freezeRow){
+    const fr = (freezeRow===undefined || freezeRow===null) ? 1 : freezeRow;
     const cols = [];
     const maxCols = data.reduce((m,r)=>Math.max(m, r.length), 0);
     for (let c=0;c<maxCols;c++){
@@ -2469,8 +2450,8 @@ self.onmessage = function(e){
       cols.push({wch:Math.min(42, Math.max(10, max))});
     }
     ws['!cols']=cols;
-    ws['!freeze']={xSplit:0,ySplit:freezeRow||1};
-    if (maxCols && data.length>freezeRow) ws['!autofilter']={ref:XLSX.utils.encode_range({s:{r:(freezeRow||1),c:0},e:{r:data.length-1,c:maxCols-1}})};
+    ws['!freeze']={xSplit:0,ySplit:fr+1};
+    if (maxCols && data.length>fr) ws['!autofilter']={ref:XLSX.utils.encode_range({s:{r:fr,c:0},e:{r:data.length-1,c:maxCols-1}})};
   }
 
   function addReportSheet(wb, sheetName, title, head, rows, total){
@@ -4835,6 +4816,7 @@ self.onmessage = function(e){
 
 <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v3d52b47920f24c319d37e2661827c42b1787588026925" integrity="sha512-d9sL6GJLXn6fInD1+TVXhTcQOsmxeHfmHAvwGDIxp5TO+uo1fiWW7mHomMj4MLRlCsJDTqXzWLHJFFlPCEIj/A==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79"}' crossorigin="anonymous"></script>
 
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495" integrity="sha512-iIg7k2xntmwu6/uSb5tpc/hySgZc4eoL31yB29W6tJFo2akwjPWcEqnCEdJvGexCL0KEQwVYv5BlowfhVz26hg==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","spa":2}' crossorigin="anonymous"></script>
 <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495" integrity="sha512-iIg7k2xntmwu6/uSb5tpc/hySgZc4eoL31yB29W6tJFo2akwjPWcEqnCEdJvGexCL0KEQwVYv5BlowfhVz26hg==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","spa":2}' crossorigin="anonymous"></script>
 </body>
 </html>
