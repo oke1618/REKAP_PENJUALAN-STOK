@@ -1547,23 +1547,48 @@ self.onmessage = function(e){
     }
   }
 
-  /* Hapus data lama hanya untuk bulan yang ada di file baru, lalu sisipkan baris baru. */
+  /* Kunci tanggal (YYYY-MM-DD) dari timestamp, memakai waktu lokal agar konsisten dengan field "bulan". */
+  function dayKeyOfTs(ts){
+    if (ts == null || isNaN(ts)) return '';
+    const d = new Date(ts);
+    if (isNaN(d.getTime())) return '';
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  }
+  function dayRangeOfKey(k){
+    const p = String(k).split('-').map(Number);
+    const start = new Date(p[0], p[1]-1, p[2], 0, 0, 0, 0).getTime();
+    const end   = new Date(p[0], p[1]-1, p[2], 23, 59, 59, 999).getTime();
+    return [start, end];
+  }
+  function dayLabel(k){
+    const p = String(k).split('-').map(Number);
+    if (p.length < 3 || isNaN(p[0])) return String(k);
+    return String(p[2]).padStart(2,'0') + '/' + String(p[1]).padStart(2,'0') + '/' + p[0];
+  }
+
+  /* Hapus data lama hanya untuk TANGGAL yang ada di file baru, lalu sisipkan baris baru.
+     Bulan yang sama tapi tanggal berbeda TIDAK ikut terhapus, sehingga upload
+     tgl 11-15 tidak lagi menghapus data tgl 1-10 di bulan yang sama.
+     Mengembalikan daftar kunci tanggal yang diganti. */
   async function commitIncomingTx(chunkRows, monthList){
-    const months = (monthList || []).filter(Boolean);
-    const monthSet = new Set(months);
+    const list = (chunkRows || []);
+    const dayKeys = [...new Set(list.map(r => dayKeyOfTs(r._ts)).filter(Boolean))].sort();
     if (useIDB){
-      for (const bl of months){
-        try { await db.tx.where('bulan').equals(bl).delete(); }
-        catch(e){ console.warn('delete bulan', bl, e); }
+      for (const k of dayKeys){
+        const r = dayRangeOfKey(k);
+        try { await db.tx.where('_ts').between(r[0], r[1], true, true).delete(); }
+        catch(e){ console.warn('delete tanggal', k, e); }
       }
-      if (chunkRows && chunkRows.length){
-        try { await db.tx.bulkPut(chunkRows); }
+      if (list.length){
+        try { await db.tx.bulkPut(list.map(r => { const o = Object.assign({}, r); delete o.id; return o; })); }
         catch(e){ console.warn('bulkPut incoming', e); }
       }
     } else {
-      if (monthSet.size) rows = rows.filter(x => !monthSet.has(x.bulan));
-      rows = rows.concat(chunkRows || []);
+      const daySet = new Set(dayKeys);
+      if (daySet.size) rows = rows.filter(x => !daySet.has(dayKeyOfTs(x._ts)));
+      rows = rows.concat(list);
     }
+    return dayKeys;
   }
 
   async function fallbackSyncParse(buf){
@@ -1615,10 +1640,10 @@ self.onmessage = function(e){
       try {
         const lanjut = await resolveHargaBeliConflicts(out, monthList);
         if (!lanjut){ setStatus('Import dibatalkan.'); hideBusy(); return; }
-        await commitIncomingTx(out, monthList);
+        const replacedDays = await commitIncomingTx(out, monthList);
         const merged = await mergeMetaFromIncoming({products:[...products], sales:[...sales], months:monthList});
         populateFiltersFromMeta(merged);
-        await postParseDone(raw.length, monthList, out.length);
+        await postParseDone(raw.length, replacedDays, out.length);
       } catch(err){
         console.error(err);
         setStatus('Gagal menyimpan data: ' + (err.message || err));
@@ -1673,14 +1698,14 @@ self.onmessage = function(e){
       try {
         const lanjut = await resolveHargaBeliConflicts(incoming, monthList);
         if (!lanjut){ setStatus('Import dibatalkan.'); hideBusy(); return; }
-        await commitIncomingTx(incoming, monthList);
+        const replacedDays = await commitIncomingTx(incoming, monthList);
         const merged = await mergeMetaFromIncoming({
           products: m.products || [],
           sales: m.sales || [],
           months: monthList
         });
         populateFiltersFromMeta(merged);
-        await postParseDone(incoming.length, monthList, incoming.length);
+        await postParseDone(incoming.length, replacedDays, incoming.length);
       } catch(err){
         console.error(err);
         setStatus('Gagal menyimpan data: ' + (err.message || err));
@@ -1689,7 +1714,7 @@ self.onmessage = function(e){
     }
   }
 
-  async function postParseDone(_totalRaw, replacedMonths, newCount){
+  async function postParseDone(_totalRaw, replacedDays, newCount){
     let totalRows, sortData;
     if (useIDB){
       totalRows = await db.tx.count();
@@ -1711,11 +1736,12 @@ self.onmessage = function(e){
     populateFiltersDOM().catch(()=>{});
     if (typeof buildColPicker === 'function') buildColPicker();
     show('s6', document.querySelector('.tabs button.active') || document.querySelector('.tabs button'));
-    const blLabel = (replacedMonths && replacedMonths.length)
-      ? replacedMonths.map(monthLabel).join(', ')
+    const dl = (replacedDays && replacedDays.length) ? replacedDays.slice().sort() : [];
+    const blLabel = dl.length
+      ? (dl.length === 1 ? dayLabel(dl[0]) : dayLabel(dl[0]) + ' s/d ' + dayLabel(dl[dl.length-1]) + ' (' + dl.length + ' hari)')
       : '';
     const extra = blLabel
-      ? ' — digabung (bulan diganti: ' + blLabel + '; baris baru: ' + (newCount||0).toLocaleString('id-ID') + ')'
+      ? ' — digabung (tanggal diperbarui: ' + blLabel + '; baris baru: ' + (newCount||0).toLocaleString('id-ID') + ')'
       : '';
     setStatus('Berhasil diproses: ' + _parseFileName + ' (total tersimpan ' + totalRows.toLocaleString('id-ID') + ' baris)' + extra + (useIDB ? ' — IndexedDB' : ' — in-memori'));
     closeDd();
