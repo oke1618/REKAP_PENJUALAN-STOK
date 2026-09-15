@@ -2810,32 +2810,34 @@ self.onmessage = function(e){
       ['Margin Aktual', margin.toFixed(2) + ' %'],
     ];
     const rowsHtml = rows.map(r =>
-      '<tr><td style="padding:6px 10px;color:#64748b;white-space:normal;width:56%">' + r[0] + '</td>' +
-      '<td style="padding:6px 10px;font-weight:700;text-align:right;white-space:normal">' + r[1] + '</td></tr>'
+      '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:7px 10px;border-bottom:1px solid #eef1f5">' +
+        '<span style="color:#64748b;flex:0 0 auto">' + r[0] + '</span>' +
+        '<span style="font-weight:700;color:#172033;text-align:right">' + r[1] + '</span>' +
+      '</div>'
     ).join('');
 
+    const saranRow = (label, val) =>
+      '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:6px 0">' +
+        '<span style="color:#7f1d1d">' + label + '</span>' +
+        '<span style="font-weight:800;color:#7f1d1d;text-align:right;white-space:nowrap">' + val + '</span>' +
+      '</div>';
     const saranHtml =
       '<div style="margin-top:14px;padding:12px 14px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px">' +
         '<div style="font-weight:800;color:#b91c1c;margin-bottom:6px">⚠ Anomali: Margin di bawah ' + MARGIN_MIN + '%</div>' +
-        '<table style="width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed">' +
-          '<tr><td style="padding:5px 0;color:#7f1d1d;white-space:normal;width:60%">Agar margin minimal ' + MARGIN_MIN + '%, Total Jual seharusnya</td>' +
-            '<td style="padding:5px 0;font-weight:800;text-align:right;color:#7f1d1d;white-space:normal">' + rp(totalMin) + '</td></tr>' +
-          '<tr><td style="padding:5px 0;color:#7f1d1d;white-space:normal">Harga Jual satuan seharusnya (qty tetap)</td>' +
-            '<td style="padding:5px 0;font-weight:800;text-align:right;color:#7f1d1d;white-space:normal">' + rp(hjualMinSatuan) + '</td></tr>' +
-          '<tr><td style="padding:5px 0;color:#7f1d1d;white-space:normal">Kekurangan profit dari target</td>' +
-            '<td style="padding:5px 0;font-weight:800;text-align:right;color:#7f1d1d;white-space:normal">' + rp(kurangProfit) + '</td></tr>' +
-        '</table>' +
+        saranRow('Agar margin minimal ' + MARGIN_MIN + '%, Total Jual seharusnya', rp(totalMin)) +
+        saranRow('Harga Jual satuan seharusnya (qty tetap)', rp(hjualMinSatuan)) +
+        saranRow('Kekurangan profit dari target', rp(kurangProfit)) +
       '</div>';
 
     const html =
       '<div id="marginDetailOverlay" onclick="if(event.target===this) closeMarginDetail()" style="position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:9998;display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box">' +
-        '<div style="background:#fff;border-radius:12px;max-width:520px;width:100%;max-height:86vh;overflow-y:auto;overflow-x:hidden;box-shadow:0 12px 40px rgba(0,0,0,.3);box-sizing:border-box">' +
+        '<div style="background:#fff;border-radius:12px;max-width:520px;width:100%;max-height:86vh;overflow-y:auto;box-shadow:0 12px 40px rgba(0,0,0,.3);box-sizing:border-box">' +
           '<div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid #e2e8f0;position:sticky;top:0;background:#fff">' +
             '<div style="font-weight:800;color:#172033;font-size:14px">Detail Anomali Margin</div>' +
             '<button onclick="closeMarginDetail()" style="background:#f1f5f9;color:#334155;border-radius:6px;padding:4px 10px;font-weight:700">✕</button>' +
           '</div>' +
-          '<div style="padding:6px 16px 16px;box-sizing:border-box">' +
-            '<table style="width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed">' + rowsHtml + '</table>' +
+          '<div style="padding:6px 16px 16px;box-sizing:border-box;font-size:13px">' +
+            '<div style="border:1px solid #eef1f5;border-radius:8px;overflow:hidden">' + rowsHtml + '</div>' +
             saranHtml +
           '</div>' +
         '</div>' +
