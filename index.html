@@ -90,6 +90,10 @@ button:disabled{opacity:.5;cursor:not-allowed}
 
 .tabs button{background:#e2e8f0;color:#334155}
 .tabs button.active{background:#1f4e78;color:#fff}
+tr.low-margin td{background:#fecaca;color:#7f1d1d;cursor:pointer}
+tr.low-margin:hover td{background:#fca5a5}
+body.dark tr.low-margin td{background:#7f1d1d;color:#fecaca;cursor:pointer}
+body.dark tr.low-margin:hover td{background:#991b1b}
 #page-penjualan #result.card{padding:10px 12px}
 #page-penjualan .tabs{gap:5px;margin-bottom:6px}
 #page-penjualan .tabs button{padding:6px 10px;font-size:11px;border-radius:6px;line-height:1.1}
@@ -2749,7 +2753,7 @@ self.onmessage = function(e){
     const maxTop = Math.max(0, n - vis - OVERSCAN); if (top > maxTop) top = maxTop;
     const cnt = Math.min(vis + OVERSCAN*2, n - top);
     let h = '<tr class="vspace"><td colspan="' + C + '" style="height:' + (top * ROW_H) + 'px"></td></tr>';
-    for (let i = top; i < top + cnt; i++) h += '<tr class="vrow">' + s0RowHTML(i) + '</tr>';
+    for (let i = top; i < top + cnt; i++) h += s0RowHTML(i);
     h += '<tr class="vspace"><td colspan="' + C + '" style="height:' + (Math.max(0, n - top - cnt) * ROW_H) + 'px"></td></tr>';
     tb.innerHTML = h;
   }
@@ -2757,15 +2761,93 @@ self.onmessage = function(e){
     const x = getUiRow(i);
     if (!x) return '';
     const pr = N(x.Total) - N(x.Jumlah) * N(x['Harga Beli']);
+    const totVal = N(x.Total);
+    const margin = totVal !== 0 ? (pr / totVal) * 100 : null;
+    const lowMargin = margin !== null && margin < 3;
     const all = {no:i+1,tgl:fmtTgl(x.Tanggal),faktur:x['No. Faktur'],produk:x.Produk,qty:x.Jumlah,satuan:x.Satuan||'',
       hjual:rp(x['Harga Jual']),hargabeli:rp(x['Harga Beli']),disc:rp(x.Discount),total:rp(x.Total),
       hpp:rp(N(x.Jumlah) * N(x['Harga Beli'])),profit:rp(pr),sales:x.Sales,bayar:x.Pembayaran,
       customer:x.Customer||'',kdcustomer:x['Kd Customer']||'',alamat:x.Alamat||''};
-    return s0Vis.map(c => {
+    const cells = s0Vis.map(c => {
       const v = all[c.k], cls = (typeof v === 'number') ? 'num' : '';
       const title = (typeof v === 'string' && v.length > 10) ? ' title="' + v.replace(/"/g,'&quot;') + '"' : '';
       return '<td class="' + cls + '"' + title + '>' + v + '</td>';
     }).join('');
+    const clickAttr = lowMargin ? ' onclick="showMarginDetail(' + i + ')" title="Klik untuk lihat detail anomali margin"' : '';
+    return '<tr class="vrow' + (lowMargin ? ' low-margin' : '') + '"' + clickAttr + '>' + cells + '</tr>';
+  }
+
+  /* ------------- detail anomali margin (klik baris merah) ------------- */
+  const MARGIN_MIN = 3; // persen
+  function showMarginDetail(i){
+    const x = getUiRow(i);
+    if (!x) return;
+    const qty = N(x.Jumlah);
+    const hjual = N(x['Harga Jual']);
+    const hbeli = N(x['Harga Beli']);
+    const disc = N(x.Discount);
+    const total = N(x.Total);
+    const hpp = qty * hbeli;
+    const profit = total - hpp;
+    const margin = total !== 0 ? (profit / total) * 100 : 0;
+    // harga jual satuan minimum agar margin = MARGIN_MIN%, dengan asumsi qty & harga beli tetap
+    // total_min = hpp / (1 - MARGIN_MIN/100)
+    const totalMin = hpp / (1 - MARGIN_MIN / 100);
+    const hjualMinSatuan = qty ? totalMin / qty : 0;
+    const kurangProfit = totalMin - total;
+
+    const rows = [
+      ['Tanggal', fmtTgl(x.Tanggal)],
+      ['No. Faktur', x['No. Faktur'] || '-'],
+      ['Produk', x.Produk || '-'],
+      ['Qty', qty.toLocaleString('id-ID') + (x.Satuan ? ' ' + x.Satuan : '')],
+      ['Harga Beli (satuan)', rp(hbeli)],
+      ['Harga Jual (satuan)', rp(hjual)],
+      ['Discount', rp(disc)],
+      ['Total Jual', rp(total)],
+      ['HPP (Beli x Qty)', rp(hpp)],
+      ['Profit Aktual', rp(profit)],
+      ['Margin Aktual', margin.toFixed(2) + ' %'],
+    ];
+    const rowsHtml = rows.map(r =>
+      '<tr><td style="padding:6px 10px;color:#64748b;white-space:normal;width:56%">' + r[0] + '</td>' +
+      '<td style="padding:6px 10px;font-weight:700;text-align:right;white-space:normal">' + r[1] + '</td></tr>'
+    ).join('');
+
+    const saranHtml =
+      '<div style="margin-top:14px;padding:12px 14px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px">' +
+        '<div style="font-weight:800;color:#b91c1c;margin-bottom:6px">⚠ Anomali: Margin di bawah ' + MARGIN_MIN + '%</div>' +
+        '<table style="width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed">' +
+          '<tr><td style="padding:5px 0;color:#7f1d1d;white-space:normal;width:60%">Agar margin minimal ' + MARGIN_MIN + '%, Total Jual seharusnya</td>' +
+            '<td style="padding:5px 0;font-weight:800;text-align:right;color:#7f1d1d;white-space:normal">' + rp(totalMin) + '</td></tr>' +
+          '<tr><td style="padding:5px 0;color:#7f1d1d;white-space:normal">Harga Jual satuan seharusnya (qty tetap)</td>' +
+            '<td style="padding:5px 0;font-weight:800;text-align:right;color:#7f1d1d;white-space:normal">' + rp(hjualMinSatuan) + '</td></tr>' +
+          '<tr><td style="padding:5px 0;color:#7f1d1d;white-space:normal">Kekurangan profit dari target</td>' +
+            '<td style="padding:5px 0;font-weight:800;text-align:right;color:#7f1d1d;white-space:normal">' + rp(kurangProfit) + '</td></tr>' +
+        '</table>' +
+      '</div>';
+
+    const html =
+      '<div id="marginDetailOverlay" onclick="if(event.target===this) closeMarginDetail()" style="position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:9998;display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box">' +
+        '<div style="background:#fff;border-radius:12px;max-width:520px;width:100%;max-height:86vh;overflow-y:auto;overflow-x:hidden;box-shadow:0 12px 40px rgba(0,0,0,.3);box-sizing:border-box">' +
+          '<div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid #e2e8f0;position:sticky;top:0;background:#fff">' +
+            '<div style="font-weight:800;color:#172033;font-size:14px">Detail Anomali Margin</div>' +
+            '<button onclick="closeMarginDetail()" style="background:#f1f5f9;color:#334155;border-radius:6px;padding:4px 10px;font-weight:700">✕</button>' +
+          '</div>' +
+          '<div style="padding:6px 16px 16px;box-sizing:border-box">' +
+            '<table style="width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed">' + rowsHtml + '</table>' +
+            saranHtml +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    const wrap = document.createElement('div');
+    wrap.id = 'marginDetailWrap';
+    wrap.innerHTML = html;
+    document.body.appendChild(wrap);
+  }
+  function closeMarginDetail(){
+    const el = document.getElementById('marginDetailWrap');
+    if (el) el.remove();
   }
 
   /* Paginasi tab rekap (siap data setahun / banyak produk) */
