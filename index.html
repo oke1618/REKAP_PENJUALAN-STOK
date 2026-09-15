@@ -112,6 +112,21 @@ th{background:#1f4e78;color:#fff;position:sticky;top:0;padding:8px;border:1px so
 .s9table th.s9-h1{height:36px;box-sizing:border-box;z-index:4}
 .s9table th.s9-h0{z-index:4}
 .s9table th.s9-h2{position:sticky;top:36px;z-index:3}
+/* Data Gudang: baris header ke-1 tetap gelap, baris ke-2 (MASUK/KELUAR/STOK SFA) dibuat lebih muda */
+#gudangTable thead tr:first-child th{height:36px;box-sizing:border-box;top:0;z-index:4}
+#gudangTable thead tr:nth-child(2) th{
+  background:#dbe7f4;
+  color:#1f4e78;
+  font-weight:600;
+  letter-spacing:.03em;
+  border-color:#b8c9de;
+  position:sticky;
+  top:36px;
+  z-index:3;
+}
+/* TANGGAL memakai rowspan=2 → biarkan tetap gelap dan menempel di atas */
+#gudangTable thead tr:first-child th[rowspan]{z-index:5}
+
 /* Data Harga tab (s9): header lebih soft/halus, warna lebih muda seperti referensi */
 .s9table th{background:#26426e;border-color:#1b3454;color:#fff;letter-spacing:.04em}
 .s9table th.s9-h0,
@@ -521,6 +536,7 @@ body.dark .menu-label{color:#cbd5e1}
 body.dark .dd-menu .hint,body.dark .status{color:#94a3b8}
 body.dark table{color:#e2e8f0}
 body.dark th{background:#1e3a5f;color:#fff;border-color:#334155}
+body.dark #gudangTable thead tr:nth-child(2) th{background:#31506f;color:#e8f0fa;border-color:#3f5f80}
 body.dark td{border-color:#334155;color:#e2e8f0}
 body.dark tbody tr:hover{background:#243447}
 body.dark tfoot td{background:#1e3a5f;color:#f1f5f9}
