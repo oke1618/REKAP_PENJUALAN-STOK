@@ -1,17 +1,24 @@
 // Ganti angka versi ini setiap kali index.html diupdate, supaya cache lama dibuang
 // dan pengguna otomatis dapat versi terbaru saat online.
-const CACHE_VERSION = 'rekap-v1';
+const CACHE_VERSION = 'rekap-v2';
 const CACHE_NAME = 'rekap-cache-' + CACHE_VERSION;
 
 const APP_SHELL = [
   './',
   './index.html',
+  './style.css',
+  './app.js',
   './manifest.json',
   './icons/icon-192.png',
   './icons/icon-512.png',
-  './icons/icon-512-maskable.png',
+  './icons/icon-maskable-192.png',
+  './icons/icon-maskable-512.png',
+  './icons/apple-touch-icon.png',
+  './icons/favicon-32.png',
+  './icons/favicon-16.png',
   'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js',
-  'https://cdn.jsdelivr.net/npm/dexie@3.2.4/dist/dexie.min.js'
+  'https://cdn.jsdelivr.net/npm/dexie@3.2.4/dist/dexie.min.js',
+  'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js'
 ];
 
 self.addEventListener('install', (event) => {
