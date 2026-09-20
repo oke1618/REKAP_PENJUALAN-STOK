@@ -39,6 +39,38 @@ button:disabled{opacity:.5;cursor:not-allowed}
   background:#e2e8f0;color:#334155;cursor:pointer;letter-spacing:.02em;
 }
 .faktur-mode-toggle .fm-btn.active{background:#1f4e78;border-color:#1f4e78;color:#fff}
+/* ===== Tombol menu ☰ (tampilan & simpan) di toolbar, rata kanan ===== */
+.toolbar-more{position:relative;margin-left:auto;display:flex;align-items:center}
+.more-dd .more-toggle{
+  display:flex;align-items:center;justify-content:center;
+  background:#f1f5f9;border:1px solid #b8c4d1;border-radius:6px;
+  padding:0;width:34px;height:30px;font-size:16px;font-weight:700;color:#1f4e78;
+  cursor:pointer;line-height:1;box-shadow:0 1px 4px rgba(31,78,120,.08);
+}
+.more-dd .more-toggle:hover{background:#e2e8f0}
+.more-dd.open .more-toggle{background:#1f4e78;color:#fff;border-color:#1f4e78}
+.more-dd .more-backdrop{display:none;position:fixed;inset:0;z-index:79;background:transparent}
+.more-dd.open .more-backdrop{display:block}
+.more-dd .more-menu{
+  display:none;position:absolute;right:0;top:calc(100% + 6px);
+  min-width:220px;background:#fff;border:1px solid #cbd5e1;border-radius:8px;
+  box-shadow:0 8px 28px rgba(31,78,120,.18);padding:8px;z-index:80;
+  flex-direction:column;gap:6px;
+}
+.more-dd.open .more-menu{display:flex}
+.more-dd .more-section{display:flex;flex-direction:column;gap:6px;padding:4px 2px}
+.more-dd .more-section + .more-section{margin-top:2px}
+.more-dd .more-section-title{font-size:10px;letter-spacing:.06em;color:#64748b;text-transform:uppercase;font-weight:700}
+.more-dd .more-divider{height:1px;background:#e2e8f0;margin:2px 0}
+.more-dd .fm-btn{flex:1 1 auto}
+.more-dd .more-menu #toolbarSaveExcel{padding:6px 10px !important;font-size:11px !important;width:100%;text-align:left}
+@media(max-width:700px){.more-dd .more-menu{right:-6px}}
+body.dark .more-dd .more-toggle{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.25);color:#e2e8f0}
+body.dark .more-dd .more-toggle:hover{background:rgba(255,255,255,.2)}
+body.dark .more-dd .more-menu{background:#1e293b;border-color:#334155;color:#f1f5f9;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+body.dark .more-dd .more-section-title,
+body.dark .more-dd .more-divider{color:#64748b;background:transparent;border-color:#334155}
+body.dark .more-dd .more-divider{height:1px;background:#334155}
 .faktur-cards{
   display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;
   max-height:68vh;overflow:auto;padding:2px 2px 8px;
@@ -149,20 +181,24 @@ body.dark .s10table th.s10-h2{background:#2d4a6f;color:#e2e8f0}
 td{padding:7px;border:1px solid #d6dde6;white-space:nowrap}
 td.num{text-align:right}
 tfoot td{background:#ffe699;font-weight:bold}
-.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:12px 0}
-.kpi{position:relative;background:linear-gradient(145deg,#ffffff 0%,#f0f6ff 100%);border:1px solid transparent;border-radius:12px;padding:10px 14px;box-shadow:0 0 0 1px rgba(47,110,180,.12),0 4px 16px rgba(31,78,120,.08),inset 0 1px 0 rgba(255,255,255,.9);overflow:hidden;transition:transform .2s,box-shadow .2s}
+.kpis{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:7px;margin:12px 0}
+.kpi{position:relative;background:linear-gradient(145deg,#ffffff 0%,#f0f6ff 100%);border:1px solid transparent;border-radius:12px;padding:9px 12px;box-shadow:0 0 0 1px rgba(47,110,180,.12),0 4px 16px rgba(31,78,120,.08),inset 0 1px 0 rgba(255,255,255,.9);overflow:hidden;transition:transform .2s,box-shadow .2s;min-width:0}
 .kpi::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(48,84,150,.06) 0%,transparent 50%,rgba(80,160,255,.05) 100%);pointer-events:none}
 .kpi::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,#305496,#5b9bd5,#305496);opacity:.7}
 .kpi:hover{transform:translateY(-2px);box-shadow:0 0 0 1px rgba(47,110,180,.22),0 8px 24px rgba(31,78,120,.14),0 0 20px rgba(91,155,213,.15)}
 .kpi small{color:#64748b;font-size:10px;letter-spacing:.08em;text-transform:uppercase;font-weight:600;position:relative;z-index:1}
-.kpi b{display:block;font-size:16px;margin-top:4px;line-height:1.2;color:#0f172a;font-weight:700;letter-spacing:-.01em;position:relative;z-index:1}
-.kpi .kpi-meta{display:block;font-size:12px;margin-top:2px;color:#475569;font-weight:600;position:relative;z-index:1}
-.kpi .kpi-meta b{display:inline;font-size:12px;margin:0;color:#0f172a}
+.kpi b{display:block;font-size:15px;margin-top:4px;line-height:1.2;color:#0f172a;font-weight:700;letter-spacing:-.01em;position:relative;z-index:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kpi .kpi-meta{display:block;font-size:11px;margin-top:2px;color:#475569;font-weight:600;position:relative;z-index:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kpi .kpi-meta b{display:inline;font-size:11px;margin:0;color:#0f172a}
 .kpi.kpi-inline{padding-top:8px;padding-bottom:8px}
-.kpi-inline .kpi-inline-row{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-top:4px;position:relative;z-index:1}
-.kpi-inline .kpi-inline-row > b{display:inline;margin-top:0}
+.kpi-inline .kpi-inline-row{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-top:4px;position:relative;z-index:1;min-width:0}
+.kpi-inline .kpi-inline-row > b{display:inline;margin-top:0;font-size:13px;white-space:nowrap}
 .kpi-inline .kpi-inline-row .kpi-meta{display:inline;margin-top:0;white-space:nowrap}
-@media(max-width:900px){.kpis{grid-template-columns:repeat(2,1fr)}}
+.kpi.kpi-compact .kpi-inline-row{flex-direction:column;gap:2px}
+.kpi.kpi-compact .kpi-inline-row > b{font-size:14px}
+@media(max-width:1300px){.kpis{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(max-width:1100px){.kpis{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:700px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .status{font-size:13px;margin-top:8px;color:#334155}
 .col-picker{position:relative;margin-left:0}
 .col-picker-btn{background:#e2e8f0;color:#334155;padding:6px 10px;font-size:12px;border-radius:6px}
@@ -773,6 +809,25 @@ body.dark .backup-action.warn{background:#422006;color:#fdba74;border-color:#924
           <span class="kpi-meta">Nominal <b id="rupaNom">Rp 0</b></span>
         </div>
       </div>
+      <div class="kpi kpi-inline kpi-compact">
+        <small>TOTAL PROFIT FITRI</small>
+        <div class="kpi-inline-row">
+          <b id="fitriProfit">Rp 0</b>
+        </div>
+      </div>
+      <div class="kpi kpi-inline kpi-compact">
+        <small>TOTAL PROFIT RUPA RUPA</small>
+        <div class="kpi-inline-row">
+          <b id="rupaProfit">Rp 0</b>
+        </div>
+      </div>
+      <div class="kpi kpi-inline kpi-compact">
+        <small>TOTAL PROFIT</small>
+        <div class="kpi-inline-row">
+          <b id="totalProfit">Rp 0</b>
+          <span class="kpi-meta">Fitri + Rupa Rupa</span>
+        </div>
+      </div>
       <div class="kpi"><small>TOTAL PENJUALAN</small><b id="s">Rp 0</b></div>
     </div>
   </div>
@@ -860,12 +915,25 @@ body.dark .backup-action.warn{background:#422006;color:#fdba74;border-color:#924
         <label for="s7DateFilter">Filter tgl</label>
         <select id="s7DateFilter" onchange="setS7DateFilter(this.value)"><option value="">Semua tanggal</option></select>
       </div>
-      <div class="faktur-mode-toggle" id="fakturModeToggle">
-        <button type="button" class="fm-btn" id="fmTableBtn" onclick="setFakturViewMode('table')">MODE TABEL</button>
-        <button type="button" class="fm-btn active" id="fmCardBtn" onclick="setFakturViewMode('card')">MODE KARTU</button>
       </div>
+      <div class="toolbar-more more-dd" id="toolbarMore">
+        <button type="button" class="more-toggle" onclick="toggleMoreMenu()" title="Menu tampilan & simpan" aria-label="Menu">☰</button>
+        <div class="more-backdrop" onclick="closeMoreMenu()"></div>
+        <div class="more-menu" onclick="event.stopPropagation()">
+          <div class="more-section" id="fakturModeToggle" style="display:none">
+            <div class="more-section-title">Mode Faktur</div>
+            <div style="display:flex;gap:4px">
+              <button type="button" class="fm-btn" id="fmTableBtn" onclick="setFakturViewMode('table')">MODE TABEL</button>
+              <button type="button" class="fm-btn active" id="fmCardBtn" onclick="setFakturViewMode('card')">MODE KARTU</button>
+            </div>
+          </div>
+          <div class="more-divider" id="moreModeDivider" style="display:none"></div>
+          <div class="more-section">
+            <div class="more-section-title">Ekspor</div>
+            <button type="button" id="toolbarSaveExcel" onclick="saveExcelTab(_activeTab||'s0');closeMoreMenu()" style="padding:7px 12px;border:1px solid #b8c4d1;border-radius:6px;background:#f1f5f9;color:#1f2937;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">💾 Simpan Excel</button>
+          </div>
+        </div>
       </div>
-      <button type="button" id="toolbarSaveExcel" onclick="saveExcelTab(_activeTab||'s0')" style="padding:7px 12px;border:1px solid #b8c4d1;border-radius:6px;background:#f1f5f9;color:#1f2937;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">💾 Simpan Excel</button>
     </div>
     <div id="table">
       <div id="panel_s0" class="view">
@@ -2010,6 +2078,9 @@ self.onmessage = function(e){
   let populatedFiltersBound = false;
   function toggleDd(){ document.getElementById('menuDd').classList.toggle('open') }
   function closeDd(){ document.getElementById('menuDd').classList.remove('open') }
+  function toggleMoreMenu(){ document.getElementById('toolbarMore').classList.toggle('open') }
+  function closeMoreMenu(){ document.getElementById('toolbarMore').classList.remove('open') }
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeMoreMenu(); });
   function toggleColPicker(){ document.getElementById('colPicker').classList.toggle('open'); closeFilterPicker() }
   function closeColPicker(){ document.getElementById('colPicker').classList.remove('open') }
   function toggleFilterPicker(){ document.getElementById('filterPicker').classList.toggle('open'); closeColPicker() }
@@ -2327,7 +2398,8 @@ self.onmessage = function(e){
     // Agregat per produk dalam 1 pass (tanpa menyimpan array baris per produk → hemat memori)
     const byProd = new Map(); // produk -> stats
     let qty = 0, sales = 0, hpp = 0, profit = 0, cs = 0, ts = 0, cp = 0, tp = 0;
-    let fitriQty = 0, fitriSales = 0, rupaQty = 0, rupaSales = 0;
+    let fitriQty = 0, fitriSales = 0, fitriProfit = 0, rupaQty = 0, rupaSales = 0, rupaProfit = 0;
+    let totalProfitFitriRupa = 0;
     const salesQty = {}; SO.forEach(s => salesQty[s] = 0);
     // Rekap per Sales dipisah berdasarkan kelompok produk:
     // MINYAK FITRI = produk yang terdeteksi FITRI, RUPA RUPA = selain FITRI.
@@ -2352,8 +2424,9 @@ self.onmessage = function(e){
       const hLine = j * hb;
       const rp0 = t - hLine;
       qty += j; sales += t; hpp += hLine; profit += rp0;
-      if (isFitriProduct(produk)) { fitriQty += j; fitriSales += t; }
-      else { rupaQty += j; rupaSales += t; }
+      if (isFitriProduct(produk)) { fitriQty += j; fitriSales += t; fitriProfit += rp0; }
+      else { rupaQty += j; rupaSales += t; rupaProfit += rp0; }
+      totalProfitFitriRupa = fitriProfit + rupaProfit;
       if (pay === 'CASH'){ cs += t; cp += rp0 }
       if (pay === 'TEMPO'){ ts += t; tp += rp0 }
       if (SO.includes(salesName)) salesQty[salesName] = (salesQty[salesName] || 0) + j;
@@ -2415,7 +2488,7 @@ self.onmessage = function(e){
     });
     s4fitri.sort((a,b) => SO.indexOf(a[0]) - SO.indexOf(b[0]));
     s4rupa.sort((a,b) => SO.indexOf(a[0]) - SO.indexOf(b[0]));
-    R = { s1, s2, s3, s4fitri, s4rupa, s5, s9, qty, sales, hpp, profit, cs, ts, cp, tp, SO2, faktur, fitriQty, fitriSales, rupaQty, rupaSales };
+    R = { s1, s2, s3, s4fitri, s4rupa, s5, s9, qty, sales, hpp, profit, cs, ts, cp, tp, SO2, faktur, fitriQty, fitriSales, fitriProfit, rupaQty, rupaSales, rupaProfit, totalProfitFitriRupa };
     // reset halaman rekap saat data berubah
     rekapPage = { s1:0, s2:0, s3:0, s5:0, s6:0, s8:0, s9:0 };
   }
@@ -2461,6 +2534,17 @@ self.onmessage = function(e){
     if (fn) fn.textContent = rp(R.fitriSales || 0);
     if (rq) rq.textContent = 'Qty ' + (R.rupaQty||0).toLocaleString('id-ID');
     if (rn) rn.textContent = rp(R.rupaSales || 0);
+    const fpr = document.getElementById('fitriProfit');
+    const rpr = document.getElementById('rupaProfit');
+    if (fpr) fpr.textContent = rp(R.fitriProfit != null ? R.fitriProfit : 0);
+    if (rpr) rpr.textContent = rp(R.rupaProfit != null ? R.rupaProfit : 0);
+    const tpr = document.getElementById('totalProfit');
+    if (tpr) {
+      const f = R.fitriProfit != null ? R.fitriProfit : 0;
+      const r = R.rupaProfit  != null ? R.rupaProfit  : 0;
+      // Hitung dari dua sumber profit agar konsisten walau cache/R hanya membawa sebagian
+      tpr.textContent = rp(R.totalProfitFitriRupa != null ? R.totalProfitFitriRupa : (f + r));
+    }
     if (document.getElementById('page-cek')) {
       renderCekFitri();
       if (document.getElementById('cekPanelRupa')) renderCekRupa();
@@ -2622,8 +2706,11 @@ self.onmessage = function(e){
     }
     const fmt = document.getElementById('fakturModeToggle');
     if (fmt) {
-      fmt.style.display = (t === 's6') ? 'flex' : 'none';
-      if (t === 's6') {
+      const showMode = t === 's6';
+      fmt.style.display = showMode ? 'block' : 'none';
+      const div = document.getElementById('moreModeDivider');
+      if (div) div.style.display = showMode ? 'block' : 'none';
+      if (showMode) {
         const tb = document.getElementById('fmTableBtn');
         const cb = document.getElementById('fmCardBtn');
         if (tb) tb.classList.toggle('active', fakturViewMode === 'table');
@@ -4950,6 +5037,7 @@ self.onmessage = function(e){
 
 <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v3d52b47920f24c319d37e2661827c42b1787588026925" integrity="sha512-d9sL6GJLXn6fInD1+TVXhTcQOsmxeHfmHAvwGDIxp5TO+uo1fiWW7mHomMj4MLRlCsJDTqXzWLHJFFlPCEIj/A==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79"}' crossorigin="anonymous"></script>
 
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495" integrity="sha512-iIg7k2xntmwu6/uSb5tpc/hySgZc4eoL31yB29W6tJFo2akwjPWcEqnCEdJvGexCL0KEQwVYv5BlowfhVz26hg==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","spa":2}' crossorigin="anonymous"></script>
 <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495" integrity="sha512-iIg7k2xntmwu6/uSb5tpc/hySgZc4eoL31yB29W6tJFo2akwjPWcEqnCEdJvGexCL0KEQwVYv5BlowfhVz26hg==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","spa":2}' crossorigin="anonymous"></script>
 <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495" integrity="sha512-iIg7k2xntmwu6/uSb5tpc/hySgZc4eoL31yB29W6tJFo2akwjPWcEqnCEdJvGexCL0KEQwVYv5BlowfhVz26hg==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","spa":2}' crossorigin="anonymous"></script>
 <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495" integrity="sha512-iIg7k2xntmwu6/uSb5tpc/hySgZc4eoL31yB29W6tJFo2akwjPWcEqnCEdJvGexCL0KEQwVYv5BlowfhVz26hg==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","spa":2}' crossorigin="anonymous"></script>
