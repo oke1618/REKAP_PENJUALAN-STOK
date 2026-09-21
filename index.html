@@ -18,65 +18,6 @@
 <script src="https://cdn.jsdelivr.net/npm/dexie@3.2.4/dist/dexie.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <link rel="stylesheet" href="./style.css">
-<style>
-/* ===== Dark mode: kurangi kecerahan header & tombol ===== */
-html.dark body,
-body.dark {
-  --header-btn-bg: rgba(255,255,255,.08);
-  --header-btn-border: rgba(255,255,255,.22);
-  --header-btn-color: #c8d4e0;
-  --header-btn-active-bg: #1e3a5f;
-  --header-btn-active-color: #e8f0f8;
-}
-html.dark .main-tab,
-body.dark .main-tab,
-html.dark .dd-toggle,
-body.dark .dd-toggle,
-html.dark .backup-btn,
-body.dark .backup-btn,
-html.dark .theme-btn,
-body.dark .theme-btn {
-  background: rgba(255,255,255,.08) !important;
-  border-color: rgba(255,255,255,.22) !important;
-  color: #c8d4e0 !important;
-  box-shadow: none !important;
-}
-html.dark .main-tab.active,
-body.dark .main-tab.active {
-  background: #1e3a5f !important;
-  color: #e8f0f8 !important;
-  border-color: rgba(255,255,255,.28) !important;
-}
-html.dark .backup-btn,
-body.dark .backup-btn {
-  background: rgba(34, 120, 80, .25) !important;
-  border-color: rgba(80, 180, 120, .35) !important;
-  color: #a8e0c0 !important;
-}
-html.dark header,
-body.dark header {
-  background: #152536 !important;
-  border-bottom-color: #1e3048 !important;
-}
-/* Sub-tab Analisa */
-.gudang-panel { display: none; }
-.gudang-panel.active { display: block; }
-#gudangPanelAnalisa .analisa-table th {
-  font-size: 11px;
-  white-space: nowrap;
-  background: #1f4e78;
-  color: #fff;
-  padding: 8px 10px;
-}
-#gudangPanelAnalisa .analisa-table td {
-  font-size: 12px;
-  padding: 7px 10px;
-}
-html.dark #gudangPanelAnalisa .analisa-table th,
-body.dark #gudangPanelAnalisa .analisa-table th {
-  background: #1a3a5c;
-}
-</style>
 </head>
 <body>
 <header>
@@ -332,92 +273,48 @@ body.dark #gudangPanelAnalisa .analisa-table th {
   <div class="gudang-subtabs" role="tablist">
     <button type="button" class="gudang-subtab active" data-gudang="fitri" onclick="switchGudangSub('fitri',this)">🧴 Fitri</button>
     <button type="button" class="gudang-subtab" data-gudang="rupa" onclick="switchGudangSub('rupa',this)">📦 Rupa Rupa</button>
-    <button type="button" class="gudang-subtab" data-gudang="analisa" onclick="switchGudangSub('analisa',this)">📊 Analisa</button>
   </div>
-
-  <!-- ===== SUB: FITRI / RUPA RUPA (stok gudang) ===== -->
-  <div id="gudangPanelStok" class="gudang-panel active">
-    <div class="gudang-toolbar">
-      <div id="gudangKpis" class="gudang-kpis"></div>
-      <div class="gudang-toolbar-right">
-      <div style="display:flex;align-items:center;gap:8px;flex:none">
-        <label style="font-size:12px;font-weight:bold;color:#475569">Bulan</label>
-        <select id="gudangMonth" onchange="renderGudangPage(gudangData)" style="width:auto;min-width:170px;padding:6px 10px;border:1px solid #cbd5e1;border-radius:7px;font-size:12px">
-          <option value="">Semua bulan</option>
-        </select>
-      </div>
-      <div class="dd" id="gudangDd" style="flex:none">
-        <button type="button" class="dd-toggle" onclick="toggleGudangDd()" title="Pengaturan Data Gudang"><span>⚙️</span></button>
-        <div class="dd-backdrop" onclick="closeGudangDd()"></div>
-        <div class="dd-menu menu-main">
-          <div class="menu-title">📦 Data Gudang — Stok Minyak</div>
-          <div class="menu-section">
-            <div class="hint">Upload file Excel rekap stok gudang (format: TANGGAL, lalu MASUK/KELUAR/STOK SFA per produk). Kolom STOK SFA dihitung otomatis (Saldo Awal + Masuk − Keluar berjalan), tidak perlu diisi manual di Excel. Data akan tersimpan otomatis di perangkat ini. <b>Upload beberapa file (misal per bulan) akan digabung otomatis</b> — data bulan sebelumnya tidak akan hilang, kecuali ada tanggal yang sama persis (akan dipakai versi file yang terbaru diupload).</div>
-            <div class="file-row"><input id="gudangFile" type="file" accept=".xlsx,.xls"></div>
-            <div class="btn-row">
-              <button type="button" onclick="processGudangFile()">Proses Excel Gudang</button>
-            </div>
-            <div class="bulk-box">
-              <div class="menu-label">Hapus data per bulan</div>
-              <select id="gudangDeleteMonth" style="margin-bottom:8px"><option value="">Pilih bulan…</option></select>
-              <div class="btn-row">
-                <button type="button" class="danger-btn" onclick="deleteGudangMonth()">Hapus Bulan Terpilih</button>
-                <button type="button" class="danger-btn" onclick="clearGudangData()">Hapus SEMUA Data Gudang</button>
-              </div>
-            </div>
-            <div id="gudangStatus" class="hint" style="margin-top:8px">Belum ada data gudang.</div>
+  <div class="gudang-toolbar">
+    <div id="gudangKpis" class="gudang-kpis"></div>
+    <div class="gudang-toolbar-right">
+    <div style="display:flex;align-items:center;gap:8px;flex:none">
+      <label style="font-size:12px;font-weight:bold;color:#475569">Bulan</label>
+      <select id="gudangMonth" onchange="renderGudangPage(gudangData)" style="width:auto;min-width:170px;padding:6px 10px;border:1px solid #cbd5e1;border-radius:7px;font-size:12px">
+        <option value="">Semua bulan</option>
+      </select>
+    </div>
+    <div class="dd" id="gudangDd" style="flex:none">
+      <button type="button" class="dd-toggle" onclick="toggleGudangDd()" title="Pengaturan Data Gudang"><span>⚙️</span></button>
+      <div class="dd-backdrop" onclick="closeGudangDd()"></div>
+      <div class="dd-menu menu-main">
+        <div class="menu-title">📦 Data Gudang — Stok Minyak</div>
+        <div class="menu-section">
+          <div class="hint">Upload file Excel rekap stok gudang (format: TANGGAL, lalu MASUK/KELUAR/STOK SFA per produk). Kolom STOK SFA dihitung otomatis (Saldo Awal + Masuk − Keluar berjalan), tidak perlu diisi manual di Excel. Data akan tersimpan otomatis di perangkat ini. <b>Upload beberapa file (misal per bulan) akan digabung otomatis</b> — data bulan sebelumnya tidak akan hilang, kecuali ada tanggal yang sama persis (akan dipakai versi file yang terbaru diupload).</div>
+          <div class="file-row"><input id="gudangFile" type="file" accept=".xlsx,.xls"></div>
+          <div class="btn-row">
+            <button type="button" onclick="processGudangFile()">Proses Excel Gudang</button>
           </div>
+          <div class="bulk-box">
+            <div class="menu-label">Hapus data per bulan</div>
+            <select id="gudangDeleteMonth" style="margin-bottom:8px"><option value="">Pilih bulan…</option></select>
+            <div class="btn-row">
+              <button type="button" class="danger-btn" onclick="deleteGudangMonth()">Hapus Bulan Terpilih</button>
+              <button type="button" class="danger-btn" onclick="clearGudangData()">Hapus SEMUA Data Gudang</button>
+            </div>
+          </div>
+          <div id="gudangStatus" class="hint" style="margin-top:8px">Belum ada data gudang.</div>
         </div>
       </div>
-      </div>
     </div>
-
-    <div class="card">
-      <div class="tablebox">
-        <table id="gudangTable">
-          <thead id="gudangThead"></thead>
-          <tbody id="gudangTbody"><tr><td style="text-align:center;padding:24px;color:#64748b">Belum ada data. Klik ⚙️ di atas untuk upload file Excel.</td></tr></tbody>
-        </table>
-      </div>
     </div>
   </div>
 
-  <!-- ===== SUB: ANALISA ===== -->
-  <div id="gudangPanelAnalisa" class="gudang-panel">
-    <div class="card">
-      <div class="cek-card-head" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px">
-        <div class="cek-card-title" style="font-weight:700;font-size:14px">📊 ANALISA STOK &amp; PENJUALAN — FITRI</div>
-        <div class="cek-card-actions" style="display:flex;align-items:center;gap:8px">
-          <label for="analisaMonth" style="font-size:12px;font-weight:bold;color:#475569">Bulan</label>
-          <select id="analisaMonth" onchange="renderAnalisa()" style="width:auto;min-width:150px;padding:6px 10px;border:1px solid #cbd5e1;border-radius:7px;font-size:12px">
-            <option value="">Semua bulan</option>
-          </select>
-          <button type="button" class="cek-refresh-btn" onclick="renderAnalisa()" title="Segarkan">↻</button>
-          <button type="button" onclick="downloadAnalisa()">⬇ Download</button>
-        </div>
-      </div>
-      <div class="tablebox">
-        <table id="analisaTable" class="analisa-table" style="min-width:980px;width:100%;border-collapse:collapse">
-          <thead>
-            <tr>
-              <th>PRODUK FITRI</th>
-              <th>OUTPUT PENJUALAN</th>
-              <th>OUTPUT GUDANG</th>
-              <th>KET</th>
-              <th>TOTAL PENJUALAN</th>
-              <th>HPP</th>
-              <th>PROFIT PENJUALAN</th>
-              <th>STOK AKHIR</th>
-              <th>HARGA BELI TERBARU</th>
-              <th>NOMINAL STOK AKHIR<br><span style="font-weight:400;font-size:10px">(stok akhir × Harga Beli Terbaru)</span></th>
-            </tr>
-          </thead>
-          <tbody id="analisaTbody">
-            <tr><td colspan="10" style="text-align:center;padding:28px;color:#64748b">Belum ada data. Pastikan data Penjualan &amp; Gudang sudah diupload.</td></tr>
-          </tbody>
-          <tfoot id="analisaTfoot"></tfoot>
-        </table>
-      </div>
+  <div class="card">
+    <div class="tablebox">
+      <table id="gudangTable">
+        <thead id="gudangThead"></thead>
+        <tbody id="gudangTbody"><tr><td style="text-align:center;padding:24px;color:#64748b">Belum ada data. Klik ⚙️ di atas untuk upload file Excel.</td></tr></tbody>
+      </table>
     </div>
   </div>
 </div>
@@ -582,219 +479,6 @@ body.dark #gudangPanelAnalisa .analisa-table th {
    • In-memory fallback if Worker or IndexedDB are unavailable
    ============================================================================
 -->
-<script>
-/* Patch: sub-tab Analisa + dark-mode softener (jika app.js belum punya) */
-(function () {
-  function setGudangPanels(which) {
-    var stok = document.getElementById('gudangPanelStok');
-    var analisa = document.getElementById('gudangPanelAnalisa');
-    if (!stok || !analisa) return;
-    if (which === 'analisa') {
-      stok.classList.remove('active');
-      stok.style.display = 'none';
-      analisa.classList.add('active');
-      analisa.style.display = 'block';
-      if (typeof renderAnalisa === 'function') renderAnalisa();
-    } else {
-      analisa.classList.remove('active');
-      analisa.style.display = 'none';
-      stok.classList.add('active');
-      stok.style.display = 'block';
-    }
-  }
-
-  var _origSwitch = window.switchGudangSub;
-  window.switchGudangSub = function (name, btn) {
-    document.querySelectorAll('.gudang-subtab').forEach(function (b) {
-      b.classList.toggle('active', b === btn || b.getAttribute('data-gudang') === name);
-    });
-    if (name === 'analisa') {
-      setGudangPanels('analisa');
-      return;
-    }
-    setGudangPanels('stok');
-    if (typeof _origSwitch === 'function') {
-      _origSwitch(name, btn);
-    } else if (typeof renderGudangPage === 'function') {
-      window._gudangSub = name;
-      renderGudangPage(window.gudangData);
-    }
-  };
-
-  window.renderAnalisa = window.renderAnalisa || function () {
-    var tbody = document.getElementById('analisaTbody');
-    var tfoot = document.getElementById('analisaTfoot');
-    var monthSel = document.getElementById('analisaMonth');
-    if (!tbody) return;
-
-    // Isi opsi bulan dari filter penjualan / gudang jika kosong
-    if (monthSel && monthSel.options.length <= 1) {
-      var src = document.getElementById('filterMonth') || document.getElementById('gudangMonth') || document.getElementById('cekFitriMonth');
-      if (src) {
-        for (var i = 0; i < src.options.length; i++) {
-          var o = src.options[i];
-          if (!o.value) continue;
-          var exists = false;
-          for (var j = 0; j < monthSel.options.length; j++) {
-            if (monthSel.options[j].value === o.value) { exists = true; break; }
-          }
-          if (!exists) {
-            var opt = document.createElement('option');
-            opt.value = o.value;
-            opt.textContent = o.textContent;
-            monthSel.appendChild(opt);
-          }
-        }
-      }
-    }
-
-    var month = monthSel ? monthSel.value : '';
-    var products = ['FITRI 200ML', 'FITRI 400ML', 'FITRI 800ML'];
-
-    // Ambil data penjualan & gudang dari global jika ada
-    var rows = [];
-    var salesMap = {};
-    var gudangMap = {};
-    var hargaMap = {};
-    var stokAkhirMap = {};
-
-    try {
-      var data = window.filteredData || window.allData || window.rows || [];
-      if (Array.isArray(data) && data.length) {
-        data.forEach(function (r) {
-          var prod = String(r.Produk || r.produk || r.PRODUK || '').toUpperCase().trim();
-          if (prod.indexOf('FITRI') < 0) return;
-          var tgl = String(r.Tanggal || r.tanggal || r.TANGGAL || '');
-          if (month && tgl && tgl.indexOf(month) !== 0 && tgl.replace(/-/g, '').indexOf(month.replace(/-/g, '')) < 0) {
-            // coba match YYYY-MM
-            var ym = tgl.slice(0, 7);
-            if (ym !== month) return;
-          }
-          var qty = Number(r.Qty || r.qty || r.QTY || r.Jumlah || 0) || 0;
-          var total = Number(r.Total || r.total || r.TOTAL || r.Nominal || 0) || 0;
-          var hb = Number(r['Harga Beli'] || r.HargaBeli || r.hargaBeli || r.HPP || 0) || 0;
-          if (!salesMap[prod]) salesMap[prod] = { qty: 0, total: 0, hpp: 0 };
-          salesMap[prod].qty += qty;
-          salesMap[prod].total += total;
-          salesMap[prod].hpp += hb * qty;
-          if (hb > 0) hargaMap[prod] = hb;
-        });
-      }
-    } catch (e) {}
-
-    try {
-      var gd = window.gudangData || [];
-      if (Array.isArray(gd) && gd.length) {
-        // asumsi struktur gudang punya tanggal + keluar per produk
-        gd.forEach(function (row) {
-          var tgl = String(row.TANGGAL || row.Tanggal || row.tanggal || '');
-          if (month) {
-            var ym = tgl.slice(0, 7);
-            if (ym !== month && tgl.indexOf(month) < 0) return;
-          }
-          products.forEach(function (p) {
-            var key = p.replace(/\s+/g, '_');
-            var keluar = Number(row['KELUAR_' + key] || row['KELUAR ' + p] || row[p + '_KELUAR'] || 0) || 0;
-            var stok = Number(row['STOK_SFA_' + key] || row['STOK SFA ' + p] || row[p + '_STOK'] || 0);
-            if (!gudangMap[p]) gudangMap[p] = 0;
-            gudangMap[p] += keluar;
-            if (!isNaN(stok)) stokAkhirMap[p] = stok;
-          });
-        });
-      }
-    } catch (e) {}
-
-    var html = '';
-    var sumOutJual = 0, sumOutGudang = 0, sumTotal = 0, sumHpp = 0, sumProfit = 0, sumStok = 0, sumNomStok = 0;
-    products.forEach(function (p) {
-      var s = salesMap[p] || { qty: 0, total: 0, hpp: 0 };
-      var outJual = s.qty;
-      var outGudang = gudangMap[p] || 0;
-      var ket = outJual === outGudang ? 'OK' : (outJual > outGudang ? 'Lebih jual' : 'Lebih gudang');
-      var totalJual = s.total;
-      var hpp = s.hpp;
-      var profit = totalJual - hpp;
-      var stokAkhir = stokAkhirMap[p] != null ? stokAkhirMap[p] : '';
-      var hargaBaru = hargaMap[p] || 0;
-      var nomStok = (typeof stokAkhir === 'number' ? stokAkhir : 0) * hargaBaru;
-
-      sumOutJual += outJual;
-      sumOutGudang += outGudang;
-      sumTotal += totalJual;
-      sumHpp += hpp;
-      sumProfit += profit;
-      if (typeof stokAkhir === 'number') sumStok += stokAkhir;
-      sumNomStok += nomStok;
-
-      function fmt(n) {
-        if (n === '' || n == null) return '-';
-        return Number(n).toLocaleString('id-ID');
-      }
-      function rp(n) {
-        return 'Rp ' + Number(n || 0).toLocaleString('id-ID');
-      }
-      var ketStyle = ket === 'OK' ? 'color:#15803d;font-weight:700' : 'color:#b45309;font-weight:700';
-      html += '<tr>' +
-        '<td style="font-weight:600">' + p + '</td>' +
-        '<td style="text-align:right">' + fmt(outJual) + '</td>' +
-        '<td style="text-align:right">' + fmt(outGudang) + '</td>' +
-        '<td style="text-align:center;' + ketStyle + '">' + ket + '</td>' +
-        '<td style="text-align:right">' + rp(totalJual) + '</td>' +
-        '<td style="text-align:right">' + rp(hpp) + '</td>' +
-        '<td style="text-align:right">' + rp(profit) + '</td>' +
-        '<td style="text-align:right">' + (stokAkhir === '' ? '-' : fmt(stokAkhir)) + '</td>' +
-        '<td style="text-align:right">' + (hargaBaru ? rp(hargaBaru) : '-') + '</td>' +
-        '<td style="text-align:right">' + (hargaBaru && stokAkhir !== '' ? rp(nomStok) : '-') + '</td>' +
-        '</tr>';
-    });
-    tbody.innerHTML = html || '<tr><td colspan="10" style="text-align:center;padding:28px;color:#64748b">Belum ada data Fitri untuk periode ini.</td></tr>';
-
-    if (tfoot) {
-      function rp(n) { return 'Rp ' + Number(n || 0).toLocaleString('id-ID'); }
-      function fmt(n) { return Number(n || 0).toLocaleString('id-ID'); }
-      tfoot.innerHTML = '<tr style="font-weight:700;background:#f1f5f9">' +
-        '<td>TOTAL</td>' +
-        '<td style="text-align:right">' + fmt(sumOutJual) + '</td>' +
-        '<td style="text-align:right">' + fmt(sumOutGudang) + '</td>' +
-        '<td></td>' +
-        '<td style="text-align:right">' + rp(sumTotal) + '</td>' +
-        '<td style="text-align:right">' + rp(sumHpp) + '</td>' +
-        '<td style="text-align:right">' + rp(sumProfit) + '</td>' +
-        '<td style="text-align:right">' + fmt(sumStok) + '</td>' +
-        '<td></td>' +
-        '<td style="text-align:right">' + rp(sumNomStok) + '</td>' +
-        '</tr>';
-    }
-  };
-
-  window.downloadAnalisa = window.downloadAnalisa || function () {
-    var table = document.getElementById('analisaTable');
-    if (!table || typeof XLSX === 'undefined') {
-      alert('Tabel atau library Excel belum siap.');
-      return;
-    }
-    var wb = XLSX.utils.table_to_book(table, { sheet: 'Analisa Fitri' });
-    var month = (document.getElementById('analisaMonth') || {}).value || 'semua';
-    XLSX.writeFile(wb, 'Analisa_Fitri_' + month + '.xlsx');
-  };
-
-  // Soft dark mode class sync
-  function softDark() {
-    var isDark = document.documentElement.classList.contains('dark') ||
-      document.body.classList.contains('dark') ||
-      document.documentElement.getAttribute('data-theme') === 'dark' ||
-      localStorage.getItem('theme') === 'dark';
-    if (isDark) {
-      document.documentElement.classList.add('dark');
-      document.body.classList.add('dark');
-    }
-  }
-  softDark();
-  var obs = new MutationObserver(softDark);
-  obs.observe(document.documentElement, { attributes: true, attributeFilter: ['class', 'data-theme'] });
-  obs.observe(document.body, { attributes: true, attributeFilter: ['class'] });
-})();
-</script>
 <script src="./app.js"></script>
 
 <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v3d52b47920f24c319d37e2661827c42b1787588026925" integrity="sha512-d9sL6GJLXn6fInD1+TVXhTcQOsmxeHfmHAvwGDIxp5TO+uo1fiWW7mHomMj4MLRlCsJDTqXzWLHJFFlPCEIj/A==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79"}' crossorigin="anonymous"></script>
