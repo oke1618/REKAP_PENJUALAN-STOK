@@ -3692,10 +3692,14 @@ self.onmessage = function(e){
       penjualanHpp[key]   = (penjualanHpp[key]   || 0) + j * hb;
     });
 
-    // Sertakan juga produk FITRI yang ada di Data Gudang meski belum ada transaksi penjualan di bulan ini.
+    // Peta key(nama dinormalisasi) -> nama kolom ASLI di Data Gudang. Nama produk di Penjualan
+    // dan di Data Gudang bisa beda penulisan (mis. "FITRI BOTOL 400ML" vs "FITRI BOTOL 400 ML"),
+    // jadi pencarian stok HARUS lewat key ini, bukan nama dari data Penjualan.
+    const gudangColByKey = {};
     if (gudangData && gudangData.products){
       gudangData.products.filter(isFitriProduct).forEach(p => {
         const key = productMatchKey(p);
+        gudangColByKey[key] = p;
         if (!productMap.has(key)) productMap.set(key, p);
       });
     }
@@ -3729,7 +3733,8 @@ self.onmessage = function(e){
       const totalPenjualan  = N(penjualanTotal[p.key]);
       const hpp             = N(penjualanHpp[p.key]);
       const profitPenjualan = totalPenjualan - hpp;
-      const stokAkhir       = gudangStokAkhirNow(p.name);
+      const gudangColName   = gudangColByKey[p.key];
+      const stokAkhir       = gudangColName ? gudangStokAkhirNow(gudangColName) : 0;
       const hargaBeliTerbaru = (hbTerbaruMap[p.key] || {}).hb || 0;
       const nominalStokAkhir = stokAkhir * hargaBeliTerbaru;
       return {name:p.name, outputPenjualan, outputGudang, totalPenjualan, hpp, profitPenjualan, stokAkhir, hargaBeliTerbaru, nominalStokAkhir};
