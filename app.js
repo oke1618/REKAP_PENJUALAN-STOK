@@ -1,4 +1,4 @@
-  /* ------------------------- helpers / constants ------------------------- */
+/* ------------------------- helpers / constants ------------------------- */
   const SO = ['RAJU','HAFID','JOSSY','GC','PARIMIN'];
   /* Urutan kolom tab Sales per Produk (sesuai template) */
   const SO_S7 = ['RAJU','JOSSY','HAFID','GC','PARIMIN'];
@@ -26,8 +26,11 @@
   const TX_COLS = [
     {k:'no',label:'NO',def:true},{k:'tgl',label:'TANGGAL',def:true},{k:'faktur',label:'NO. FAKTUR',def:true},
     {k:'produk',label:'PRODUK',def:true},{k:'qty',label:'QTY',def:true},{k:'satuan',label:'SATUAN',def:true},
-    {k:'hjual',label:'HARGA JUAL',def:true},{k:'hargabeli',label:'HARGA BELI',def:true},{k:'disc',label:'DISC',def:true},
-    {k:'total',label:'TOTAL',def:true},{k:'hpp',label:'HPP',def:true},{k:'profit',label:'PROFIT',def:true},
+    {k:'hjual',label:'HARGA JUAL',def:true},{k:'disc',label:'DISC',def:true},
+    {k:'hjualdisc',label:'HARGA JUAL SETELAH DISC',def:true},
+    {k:'hargabeli',label:'HARGA BELI',def:true},{k:'total',label:'TOTAL',def:true},{k:'hpp',label:'HPP',def:true},
+    {k:'profit',label:'PROFIT',def:true},
+    {k:'margin',label:'MARGIN',def:true},
     {k:'sales',label:'SALES',def:true},{k:'bayar',label:'PEMBAYARAN',def:true},
     {k:'customer',label:'CUSTOMER',def:true},{k:'kdcustomer',label:'KODE CUSTOMER',def:true},{k:'alamat',label:'ALAMAT',def:true}
   ];
@@ -1423,9 +1426,19 @@ self.onmessage = function(e){
     const wb=XLSX.utils.book_new();
     const r=R, SO2=r.SO2||SO, n=SO2.length;
     if(tab==='s0'){
-      const head=['NO','TANGGAL','NO. FAKTUR','PRODUK','QTY','SATUAN','HARGA JUAL','HARGA BELI','DISC','TOTAL','HPP','PROFIT','SALES','PEMBAYARAN','CUSTOMER','KODE CUSTOMER','ALAMAT'];
-      const rows=filteredRows.map((_,i)=>{const x=getUiRow(i); const pr=N(x.Total)-N(x.Jumlah)*N(x['Harga Beli']); return [i+1,fmtTgl(x.Tanggal),x['No. Faktur'],x.Produk,x.Jumlah,x.Satuan||'',N(x['Harga Jual']),N(x['Harga Beli']),N(x.Discount),N(x.Total),N(x.Jumlah)*N(x['Harga Beli']),pr,x.Sales,x.Pembayaran,x.Customer||'',x['Kd Customer']||'',x.Alamat||''];});
-      addReportSheet(wb,'Transaksi','Transaksi Penjualan',head,rows,['TOTAL','','','',r.qty,'','','','','',r.hpp,r.profit,'','','','','']);
+      const head=['NO','TANGGAL','NO. FAKTUR','PRODUK','QTY','SATUAN','HARGA JUAL','DISC','HARGA JUAL SETELAH DISC','HARGA BELI','TOTAL','HPP','PROFIT','MARGIN','SALES','PEMBAYARAN','CUSTOMER','KODE CUSTOMER','ALAMAT'];
+      const rows=filteredRows.map((_,i)=>{
+        const x=getUiRow(i);
+        const qty=N(x.Jumlah);
+        const total=N(x.Total);
+        const hpp=qty*N(x['Harga Beli']);
+        const pr=total-hpp;
+        const hjualDisc=qty>0 ? (total/qty) : N(x['Harga Jual']);
+        const margin=total!==0 ? (pr/total*100) : 0;
+        return [i+1,fmtTgl(x.Tanggal),x['No. Faktur'],x.Produk,x.Jumlah,x.Satuan||'',N(x['Harga Jual']),N(x.Discount),hjualDisc,N(x['Harga Beli']),total,hpp,pr,margin,x.Sales,x.Pembayaran,x.Customer||'',x['Kd Customer']||'',x.Alamat||''];
+      });
+      const marginTot=r.sales ? (r.profit/r.sales*100) : 0;
+      addReportSheet(wb,'Transaksi','Transaksi Penjualan',head,rows,['TOTAL','','','',r.qty,'','','','','',r.sales,r.hpp,r.profit,marginTot,'','','','','']);
     } else if(tab==='s1'){
       const head=['PRODUK',...SO2,'TOTAL QTY','SATUAN','HARGA BELI','HARGA JUAL','BELI X QTY','JUAL X QTY','PROFIT'];
       const rows=(r.s1||[]).map(x=>{const row=[x[0]];for(let i=1;i<=n;i++)row.push(x[i]);row.push(x[n+1],x[n+2],x[n+3],x[n+4],x[n+5],x[n+6],x[n+7]);return row;});
@@ -1554,7 +1567,14 @@ self.onmessage = function(e){
   function s0Key(){ return dataVersion + '|' + TX_COLS.filter(c => colVis[c.k]).map(c => c.k).join(','); }
 
   function computeColWidths(rowsArg){
-    const base = {no:40,tgl:110,faktur:90,produk:120,qty:50,satuan:60,hjual:100,hargabeli:100,disc:90,total:100,hpp:100,profit:100,sales:70,bayar:100,customer:110,kdcustomer:110,alamat:150};
+    const base = {
+      no:40, tgl:110, faktur:90, produk:120, qty:50, satuan:60,
+      hjual:100, disc:90,
+      hjualdisc:130,
+      hargabeli:100, total:100, hpp:100, profit:100,
+      margin:80,
+      sales:70, bayar:100, customer:110, kdcustomer:110, alamat:150
+    };
     const w = Object.assign({}, base);
     const upd = (k,v) => { const q = Math.round(v); if (q > w[k]) w[k] = q; };
     const numW = v => { const a = Math.abs(N(v)); if (!a) return 70; const digs = Math.ceil(Math.log10(a + 1)); return Math.min(190, (digs + Math.ceil(digs/3) + 3) * 8 + 22); };
@@ -1607,6 +1627,8 @@ self.onmessage = function(e){
       upd('total', numW(N(total)));
       upd('hpp', numW(N(jumlah) * N(hb)));
       upd('profit', numW(N(total) - N(jumlah) * N(hb)));
+      upd('hjualdisc', numW(N(total) / Math.max(1, N(jumlah))));
+      upd('margin', 90);
     };
     if (!indices) {
       for (let i = 0; i < n; i++) visit(data[i]);
@@ -1622,8 +1644,14 @@ self.onmessage = function(e){
     const act = document.getElementById('s0actions'); if (act) act.innerHTML = '';
     s0Vis = TX_COLS.filter(c => colVis[c.k]);
     const head = s0Vis.map(c => '<th>' + c.label + '</th>').join('');
-    const totMap = {no:'TOTAL',tgl:'',faktur:'',produk:'',qty:R.qty,satuan:'',hjual:'',hargabeli:'',disc:'',
-      total:rp(R.sales),hpp:rp(R.hpp),profit:rp(R.profit),sales:'',bayar:'',customer:'',kdcustomer:'',alamat:''};
+    const totMap = {
+      no:'TOTAL', tgl:'', faktur:'', produk:'', qty:R.qty, satuan:'',
+      hjual:'', disc:'',
+      hjualdisc:'',
+      hargabeli:'', total:rp(R.sales), hpp:rp(R.hpp), profit:rp(R.profit),
+      margin: R.sales ? ((R.profit / R.sales) * 100).toFixed(2) + ' %' : '',
+      sales:'', bayar:'', customer:'', kdcustomer:'', alamat:''
+    };
     s0FootHtml = s0Vis.map(c => '<td class="num">' + totMap[c.k] + '</td>').join('');
     s0Cols = s0Vis.map(c => '<col style="width:' + (s0Widths[c.k] || 90) + 'px">').join('');
     box.innerHTML = '<table style="table-layout:fixed"><colgroup>' + s0Cols + '</colgroup><thead><tr>' + head + '</tr></thead><tbody id="s0tbody"></tbody></table>';
@@ -1658,14 +1686,34 @@ self.onmessage = function(e){
   function s0RowHTML(i){
     const x = getUiRow(i);
     if (!x) return '';
-    const pr = N(x.Total) - N(x.Jumlah) * N(x['Harga Beli']);
-    const totVal = N(x.Total);
-    const margin = totVal !== 0 ? (pr / totVal) * 100 : null;
+    const qty = N(x.Jumlah);
+    const total = N(x.Total);
+    const hpp = qty * N(x['Harga Beli']);
+    const pr = total - hpp;
+    const margin = total !== 0 ? (pr / total) * 100 : null;
     const lowMargin = margin !== null && margin < 3;
-    const all = {no:i+1,tgl:fmtTgl(x.Tanggal),faktur:x['No. Faktur'],produk:x.Produk,qty:x.Jumlah,satuan:x.Satuan||'',
-      hjual:rp(x['Harga Jual']),hargabeli:rp(x['Harga Beli']),disc:rp(x.Discount),total:rp(x.Total),
-      hpp:rp(N(x.Jumlah) * N(x['Harga Beli'])),profit:rp(pr),sales:x.Sales,bayar:x.Pembayaran,
-      customer:x.Customer||'',kdcustomer:x['Kd Customer']||'',alamat:x.Alamat||''};
+    const hjualDisc = qty > 0 ? (total / qty) : N(x['Harga Jual']);
+    const all = {
+      no:i+1,
+      tgl:fmtTgl(x.Tanggal),
+      faktur:x['No. Faktur'],
+      produk:x.Produk,
+      qty:x.Jumlah,
+      satuan:x.Satuan||'',
+      hjual:rp(x['Harga Jual']),
+      disc:rp(x.Discount),
+      hjualdisc:rp(hjualDisc),
+      hargabeli:rp(x['Harga Beli']),
+      total:rp(x.Total),
+      hpp:rp(hpp),
+      profit:rp(pr),
+      margin: margin !== null ? (margin.toFixed(2) + ' %') : '-',
+      sales:x.Sales,
+      bayar:x.Pembayaran,
+      customer:x.Customer||'',
+      kdcustomer:x['Kd Customer']||'',
+      alamat:x.Alamat||''
+    };
     const cells = s0Vis.map(c => {
       const v = all[c.k], cls = (typeof v === 'number') ? 'num' : '';
       const title = (typeof v === 'string' && v.length > 10) ? ' title="' + v.replace(/"/g,'&quot;') + '"' : '';
@@ -2310,14 +2358,20 @@ self.onmessage = function(e){
     const w = XLSX.utils.book_new();
     const add = (n,h,d,t) => { const ws = XLSX.utils.aoa_to_sheet([h, ...d, t]); XLSX.utils.book_append_sheet(w, ws, n) };
     const r = R, SO2 = r.SO2 || SO, n = SO2.length;
-    const s0Head = ['NO','TANGGAL','NO. FAKTUR','PRODUK','QTY','SATUAN','HARGA JUAL','HARGA BELI','DISC','TOTAL','HPP','PROFIT','SALES','PEMBAYARAN','CUSTOMER','KODE CUSTOMER','ALAMAT'];
+    const s0Head = ['NO','TANGGAL','NO. FAKTUR','PRODUK','QTY','SATUAN','HARGA JUAL','DISC','HARGA JUAL SETELAH DISC','HARGA BELI','TOTAL','HPP','PROFIT','MARGIN','SALES','PEMBAYARAN','CUSTOMER','KODE CUSTOMER','ALAMAT'];
     const s0Data = filteredRows.map((_,i) => {
       const x = getUiRow(i);
-      const pr = N(x.Total) - N(x.Jumlah) * N(x['Harga Beli']);
-      return [i+1, fmtTgl(x.Tanggal), x['No. Faktur'], x.Produk, x.Jumlah, x.Satuan||'', x['Harga Jual'], x['Harga Beli'], x.Discount, x.Total,
-        N(x.Jumlah) * N(x['Harga Beli']), pr, x.Sales, x.Pembayaran, x.Customer||'', x['Kd Customer']||'', x.Alamat||''];
+      const qty = N(x.Jumlah);
+      const total = N(x.Total);
+      const hpp = qty * N(x['Harga Beli']);
+      const pr = total - hpp;
+      const hjualDisc = qty > 0 ? (total / qty) : N(x['Harga Jual']);
+      const margin = total !== 0 ? (pr / total * 100) : 0;
+      return [i+1, fmtTgl(x.Tanggal), x['No. Faktur'], x.Produk, x.Jumlah, x.Satuan||'', x['Harga Jual'], x.Discount, hjualDisc, x['Harga Beli'], x.Total, hpp, pr, margin,
+        x.Sales, x.Pembayaran, x.Customer||'', x['Kd Customer']||'', x.Alamat||''];
     });
-    add('Transaksi', s0Head, s0Data, ['TOTAL', '', '', '', r.qty, '', '', '', '', r.sales, r.hpp, r.profit, '', '', '', '', '']);
+    const marginTot = r.sales ? (r.profit / r.sales * 100) : 0;
+    add('Transaksi', s0Head, s0Data, ['TOTAL', '', '', '', r.qty, '', '', '', '', '', r.sales, r.hpp, r.profit, marginTot, '', '', '', '', '']);
     const s1Head = ['PRODUK', ...SO2, 'TOTAL QTY','SATUAN','HARGA BELI','HARGA JUAL','BELI X QTY','JUAL X QTY','PROFIT'];
     const s1Data = r.s1.map(x => { const row = [x[0]]; for (let i = 1; i <= n; i++) row.push(x[i]); row.push(x[n+1],x[n+2],x[n+3],x[n+4],x[n+5],x[n+6],x[n+7]); return row });
     add('Rekap per Produk', s1Head, s1Data, ['TOTAL', ...SO2.map((s,i) => r.s1.reduce((a,x) => a + (x[1+i]||0), 0)), r.qty, '', '', '', r.hpp, r.sales, r.profit]);
@@ -3363,7 +3417,7 @@ self.onmessage = function(e){
     // baru dipakai — bukan dibuang diam-diam. Produk yang benar-benar baru selalu pakai saldo
     // awal dari file baru.
     const existingMinTs = existing.rows.length ? Math.min(...existing.rows.map(r => r.ts)) : Infinity;
-    const incomingMinTs = (incoming.rows||[]).length ? Math.min(...incoming.rows.map(r => r.ts)) : Infinity;
+    const incomingMinTs = (incoming.rows||[]).length ? Math.min(...(incoming.rows||[]).map(r => r.ts)) : Infinity;
     const incomingIsCorrection = incomingMinTs <= existingMinTs;
 
     const saldoAwal = {};
