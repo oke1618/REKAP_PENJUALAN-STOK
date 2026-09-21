@@ -273,6 +273,7 @@
   <div class="gudang-subtabs" role="tablist">
     <button type="button" class="gudang-subtab active" data-gudang="fitri" onclick="switchGudangSub('fitri',this)">🧴 Fitri</button>
     <button type="button" class="gudang-subtab" data-gudang="rupa" onclick="switchGudangSub('rupa',this)">📦 Rupa Rupa</button>
+    <button type="button" class="gudang-subtab" data-gudang="analisa" onclick="switchGudangSub('analisa',this)">📊 Analisa</button>
   </div>
   <div class="gudang-toolbar">
     <div id="gudangKpis" class="gudang-kpis"></div>
@@ -309,11 +310,27 @@
     </div>
   </div>
 
-  <div class="card">
+  <div class="card" id="gudangNormalCard">
     <div class="tablebox">
       <table id="gudangTable">
         <thead id="gudangThead"></thead>
         <tbody id="gudangTbody"><tr><td style="text-align:center;padding:24px;color:#64748b">Belum ada data. Klik ⚙️ di atas untuk upload file Excel.</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card" id="gudangAnalisaCard" style="display:none">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px">
+      <div style="font-size:13px;font-weight:800;color:#1f4e78">📊 ANALISA FITRI — PENJUALAN vs GUDANG vs PROFIT vs STOK</div>
+      <button type="button" onclick="downloadGudangAnalisa()">⬇ Download</button>
+    </div>
+    <div class="tablebox" id="gudangAnalisaBox">
+      <table id="gudangAnalisaTable" style="min-width:1100px">
+        <thead id="gudangAnalisaThead"></thead>
+        <tbody id="gudangAnalisaTbody">
+          <tr><td style="text-align:center;padding:24px;color:#64748b">Belum ada data.</td></tr>
+        </tbody>
+        <tfoot id="gudangAnalisaTfoot"></tfoot>
       </table>
     </div>
   </div>

@@ -3520,7 +3520,7 @@ self.onmessage = function(e){
   let _gudangSub = 'fitri';
 
   function switchGudangSub(which, btn){
-    _gudangSub = (which === 'rupa') ? 'rupa' : 'fitri';
+    _gudangSub = (which === 'rupa') ? 'rupa' : (which === 'analisa') ? 'analisa' : 'fitri';
     document.querySelectorAll('#page-gudang .gudang-subtab').forEach(b => b.classList.remove('active'));
     if (btn) btn.classList.add('active');
     else {
@@ -3535,6 +3535,19 @@ self.onmessage = function(e){
     const thead  = document.getElementById('gudangThead');
     const tbody  = document.getElementById('gudangTbody');
     if (!thead || !tbody) return;
+
+    // Sub-tab "Analisa": tampilan & sumber data berbeda dari Fitri/Rupa Rupa (ledger gudang).
+    const normalCard  = document.getElementById('gudangNormalCard');
+    const analisaCard = document.getElementById('gudangAnalisaCard');
+    if (_gudangSub === 'analisa'){
+      if (normalCard)  normalCard.style.display  = 'none';
+      if (analisaCard) analisaCard.style.display = '';
+      if (kpiBox) kpiBox.innerHTML = '';
+      renderGudangAnalisa();
+      return;
+    }
+    if (normalCard)  normalCard.style.display  = '';
+    if (analisaCard) analisaCard.style.display = 'none';
 
     if (!data || !data.products || !data.products.length){
       kpiBox.innerHTML = '<div style="padding:10px 4px;color:#64748b;font-size:13px;align-self:center">Belum ada data gudang. Klik ⚙️ di kanan untuk upload file Excel.</div>';
@@ -3624,6 +3637,219 @@ self.onmessage = function(e){
     }).join('');
     tbody.innerHTML = body;
     populateGudangDeleteMonth();
+  }
+
+  /* ------------- Sub-tab "Analisa": Penjualan vs Gudang vs Profit vs Stok (khusus FITRI) ------------- */
+
+  // Stok akhir saat ini (paling mutakhir) untuk 1 produk gudang, tidak terikat filter bulan —
+  // dipakai sebagai "snapshot" kondisi stok terkini, terlepas dari periode yang sedang dilihat.
+  function gudangStokAkhirNow(product){
+    if (!gudangData) return 0;
+    let last = N((gudangData.saldoAwal || {})[product]);
+    (gudangData.rows || []).forEach(r => {
+      const v = r.values[product];
+      if (v && v.stok !== null && v.stok !== undefined) last = v.stok;
+    });
+    return last;
+  }
+
+  // Harga Beli paling akhir (terbaru) per produk FITRI, diambil dari SELURUH data penjualan
+  // (tanpa filter bulan) — supaya nilai stok selalu dihargai dengan harga beli paling mutakhir.
+  async function gudangHargaBeliTerbaruMap(){
+    const allRows = await getCekSourceRows('', {mode:'fitri'});
+    const latest = {};
+    allRows.forEach(x => {
+      const produk = String(x.produk ?? x.Produk ?? '').trim();
+      if (!produk) return;
+      const hb = N(x.hargaBeli ?? x['Harga Beli']);
+      if (hb <= 0) return;
+      const ts = x._ts || 0;
+      const key = productMatchKey(produk);
+      if (!latest[key] || ts >= latest[key].ts) latest[key] = {ts, hb};
+    });
+    return latest;
+  }
+
+  // Kumpulkan data Analisa (per produk FITRI) untuk bulan terpilih (''=semua bulan):
+  // OUTPUT PENJUALAN & TOTAL PENJUALAN & HPP & PROFIT mengikuti filter bulan;
+  // OUTPUT GUDANG (keluar) mengikuti filter bulan yang sama;
+  // STOK AKHIR & HARGA BELI TERBARU adalah kondisi terkini (tidak difilter bulan).
+  async function collectGudangAnalisaData(month){
+    const sourceRows = await getCekSourceRows(month, {mode:'fitri'});
+    const productMap = new Map();      // key -> nama produk
+    const penjualanQty = {}, penjualanTotal = {}, penjualanHpp = {};
+
+    sourceRows.forEach(x => {
+      const produk = String(x.produk ?? x.Produk ?? '').trim();
+      if (!produk) return;
+      const key = productMatchKey(produk);
+      if (!productMap.has(key)) productMap.set(key, produk);
+      const j = N(x.jumlah ?? x.Jumlah);
+      const t = N(x.total ?? x.Total);
+      const hb = N(x.hargaBeli ?? x['Harga Beli']);
+      penjualanQty[key]   = (penjualanQty[key]   || 0) + j;
+      penjualanTotal[key] = (penjualanTotal[key] || 0) + t;
+      penjualanHpp[key]   = (penjualanHpp[key]   || 0) + j * hb;
+    });
+
+    // Sertakan juga produk FITRI yang ada di Data Gudang meski belum ada transaksi penjualan di bulan ini.
+    if (gudangData && gudangData.products){
+      gudangData.products.filter(isFitriProduct).forEach(p => {
+        const key = productMatchKey(p);
+        if (!productMap.has(key)) productMap.set(key, p);
+      });
+    }
+
+    // Output Gudang (Keluar) per produk, mengikuti filter bulan.
+    const gudangKeluar = {};
+    if (gudangData && gudangData.rows){
+      gudangData.rows.forEach(r => {
+        const dk = cekDateKeyUTC(r.tanggal);
+        if (month && cekMonthKey(dk) !== month) return;
+        Object.keys(r.values || {}).forEach(p => {
+          if (!isFitriProduct(p)) return;
+          const keluar = N((r.values[p] || {}).keluar);
+          if (!keluar) return;
+          const key = productMatchKey(p);
+          if (!productMap.has(key)) productMap.set(key, p);
+          gudangKeluar[key] = (gudangKeluar[key] || 0) + keluar;
+        });
+      });
+    }
+
+    const hbTerbaruMap = await gudangHargaBeliTerbaruMap();
+
+    const products = [...productMap.entries()]
+      .map(([key, name]) => ({key, name}))
+      .sort((a,b) => a.name.localeCompare(b.name, 'id'));
+
+    const list = products.map(p => {
+      const outputPenjualan = N(penjualanQty[p.key]);
+      const outputGudang    = N(gudangKeluar[p.key]);
+      const totalPenjualan  = N(penjualanTotal[p.key]);
+      const hpp             = N(penjualanHpp[p.key]);
+      const profitPenjualan = totalPenjualan - hpp;
+      const stokAkhir       = gudangStokAkhirNow(p.name);
+      const hargaBeliTerbaru = (hbTerbaruMap[p.key] || {}).hb || 0;
+      const nominalStokAkhir = stokAkhir * hargaBeliTerbaru;
+      return {name:p.name, outputPenjualan, outputGudang, totalPenjualan, hpp, profitPenjualan, stokAkhir, hargaBeliTerbaru, nominalStokAkhir};
+    });
+
+    const hasGudang = !!(gudangData && gudangData.products && gudangData.products.length);
+    return {list, hasGudang};
+  }
+
+  let _gudangAnalisaLast = null;
+
+  async function renderGudangAnalisa(){
+    const thead = document.getElementById('gudangAnalisaThead');
+    const tbody = document.getElementById('gudangAnalisaTbody');
+    const tfoot = document.getElementById('gudangAnalisaTfoot');
+    const kpiBox = document.getElementById('gudangKpis');
+    if (!thead || !tbody) return;
+
+    // Dropdown bulan dipakai bersama lintas sub-tab Fitri/Rupa Rupa/Analisa; isi ulang dari data gudang.
+    const monthSel = document.getElementById('gudangMonth');
+    let selMonth = monthSel ? monthSel.value : '';
+    if (monthSel){
+      const rowsAll = (gudangData && gudangData.rows) || [];
+      const curr = monthSel.value;
+      const monthKeys = [...new Set(rowsAll.map(r => monthKeyUTC(r.tanggal)).filter(Boolean))].sort().reverse();
+      monthSel.innerHTML = '<option value="">Semua bulan</option>' +
+        monthKeys.map(m => '<option value="' + m + '">' + monthLabel(m) + '</option>').join('');
+      if (monthKeys.includes(curr)) { monthSel.value = curr; selMonth = curr; }
+      else if (monthKeys.length) { selMonth = pickLatestMonth(monthKeys); monthSel.value = selMonth; }
+      else { selMonth = ''; monthSel.value = ''; }
+    }
+    populateGudangDeleteMonth();
+
+    const data = await collectGudangAnalisaData(selMonth);
+    _gudangAnalisaLast = data;
+    const {list, hasGudang} = data;
+
+    if (kpiBox){
+      if (!list.length){
+        kpiBox.innerHTML = '';
+      } else {
+        const totalProfit = list.reduce((a,r) => a + r.profitPenjualan, 0);
+        const totalNominalStok = list.reduce((a,r) => a + r.nominalStokAkhir, 0);
+        kpiBox.innerHTML =
+          '<div class="gkpi" style="cursor:default">' +
+            '<span class="gk-label">TOTAL PROFIT PENJUALAN FITRI</span>' +
+            '<span class="gk-stok" style="color:' + (totalProfit >= 0 ? '#166534' : '#dc2626') + '">' + rp(totalProfit) + '</span>' +
+          '</div>' +
+          '<div class="gkpi" style="cursor:default">' +
+            '<span class="gk-label">TOTAL NOMINAL STOK AKHIR</span>' +
+            '<span class="gk-stok">' + rp(totalNominalStok) + '</span>' +
+          '</div>';
+      }
+    }
+
+    thead.innerHTML = '<tr>' +
+      '<th>PRODUK FITRI</th><th>OUTPUT PENJUALAN</th><th>OUTPUT GUDANG</th><th>KET</th>' +
+      '<th>TOTAL PENJUALAN</th><th>HPP</th><th>PROFIT PENJUALAN</th><th>STOK AKHIR</th>' +
+      '<th>HARGA BELI TERBARU</th><th>NOMINAL STOK AKHIR</th>' +
+    '</tr>';
+
+    if (!list.length){
+      tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:24px;color:#64748b">Belum ada data penjualan/gudang FITRI untuk dianalisa.</td></tr>';
+      tfoot.innerHTML = '';
+      return;
+    }
+
+    let sumOP=0, sumOG=0, sumTP=0, sumHPP=0, sumProfit=0, sumStok=0, sumNominal=0;
+    let body = '';
+    list.forEach(r => {
+      sumOP += r.outputPenjualan; sumOG += r.outputGudang; sumTP += r.totalPenjualan;
+      sumHPP += r.hpp; sumProfit += r.profitPenjualan; sumStok += r.stokAkhir; sumNominal += r.nominalStokAkhir;
+      const selisih = r.outputPenjualan - r.outputGudang;
+      body += '<tr>' +
+        '<td>' + escHtml(r.name) + '</td>' +
+        '<td class="num">' + nfQty(r.outputPenjualan) + '</td>' +
+        '<td class="num">' + (hasGudang ? nfQty(r.outputGudang) : '-') + '</td>' +
+        '<td>' + (hasGudang ? ketBadge(selisih) : '-') + '</td>' +
+        '<td class="num">' + rp(r.totalPenjualan) + '</td>' +
+        '<td class="num">' + rp(r.hpp) + '</td>' +
+        '<td class="num" style="font-weight:700;color:' + (r.profitPenjualan >= 0 ? '#166534' : '#dc2626') + '">' + rp(r.profitPenjualan) + '</td>' +
+        '<td class="num">' + nfQty(r.stokAkhir) + '</td>' +
+        '<td class="num">' + rp(r.hargaBeliTerbaru) + '</td>' +
+        '<td class="num" style="font-weight:700">' + rp(r.nominalStokAkhir) + '</td>' +
+      '</tr>';
+    });
+    tbody.innerHTML = body;
+
+    const netSel = sumOP - sumOG;
+    tfoot.innerHTML = '<tr>' +
+      '<td>TOTAL</td>' +
+      '<td class="num">' + nfQty(sumOP) + '</td>' +
+      '<td class="num">' + (hasGudang ? nfQty(sumOG) : '-') + '</td>' +
+      '<td>' + (hasGudang ? ketBadge(netSel) : '') + '</td>' +
+      '<td class="num">' + rp(sumTP) + '</td>' +
+      '<td class="num">' + rp(sumHPP) + '</td>' +
+      '<td class="num" style="font-weight:800">' + rp(sumProfit) + '</td>' +
+      '<td class="num">' + nfQty(sumStok) + '</td>' +
+      '<td class="num">-</td>' +
+      '<td class="num" style="font-weight:800">' + rp(sumNominal) + '</td>' +
+    '</tr>';
+  }
+
+  function downloadGudangAnalisa(){
+    if (!_gudangAnalisaLast || !_gudangAnalisaLast.list.length) return alert('Belum ada data untuk diunduh.');
+    const {list, hasGudang} = _gudangAnalisaLast;
+    const head = ['PRODUK FITRI','OUTPUT PENJUALAN','OUTPUT GUDANG','KET','TOTAL PENJUALAN','HPP','PROFIT PENJUALAN','STOK AKHIR','HARGA BELI TERBARU','NOMINAL STOK AKHIR'];
+    let sumOP=0, sumOG=0, sumTP=0, sumHPP=0, sumProfit=0, sumStok=0, sumNominal=0;
+    const dataRows = list.map(r => {
+      sumOP += r.outputPenjualan; sumOG += r.outputGudang; sumTP += r.totalPenjualan;
+      sumHPP += r.hpp; sumProfit += r.profitPenjualan; sumStok += r.stokAkhir; sumNominal += r.nominalStokAkhir;
+      const selisih = r.outputPenjualan - r.outputGudang;
+      return [r.name, r.outputPenjualan, hasGudang ? r.outputGudang : '-', hasGudang ? ketText(selisih) : '-',
+        r.totalPenjualan, r.hpp, r.profitPenjualan, r.stokAkhir, r.hargaBeliTerbaru, r.nominalStokAkhir];
+    });
+    const foot = ['TOTAL', sumOP, hasGudang ? sumOG : '-', '', sumTP, sumHPP, sumProfit, sumStok, '', sumNominal];
+    const ws = XLSX.utils.aoa_to_sheet([head, ...dataRows, foot]);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Analisa Fitri');
+    XLSX.writeFile(wb, 'Analisa_Fitri.xlsx');
   }
 
   /* ------------- Modal Input Stok Gudang (klik kartu produk) ------------- */
