@@ -1,7 +1,7 @@
 {
-  "name": "Rekap Penjualan & Uang Masuk — Gabungan",
+  "name": "Rekap Penjualan & Stok",
   "short_name": "Rekap Penjualan",
-  "description": "Aplikasi rekap penjualan dan uang masuk.",
+  "description": "Aplikasi rekap penjualan dan stok.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
