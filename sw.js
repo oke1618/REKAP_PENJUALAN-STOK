@@ -1,6 +1,6 @@
 // Ganti angka versi ini setiap kali index.html diupdate, supaya cache lama dibuang
 // dan pengguna otomatis dapat versi terbaru saat online.
-const CACHE_VERSION = 'rekap-v2';
+const CACHE_VERSION = 'rekap-v3';
 const CACHE_NAME = 'rekap-cache-' + CACHE_VERSION;
 
 const APP_SHELL = [
